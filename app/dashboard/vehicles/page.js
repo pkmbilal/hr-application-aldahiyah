@@ -1,0 +1,156 @@
+import Link from "next/link";
+import { deleteVehicle } from "@/app/dashboard/vehicles/actions";
+import { ExpiryBadge } from "@/components/dashboard/ExpiryBadge";
+import { requireCurrentUserProfile } from "@/lib/auth";
+import { listVehicles } from "@/lib/vehicles";
+
+export const metadata = {
+  title: "Vehicles | HR Aldahiyah",
+};
+
+function formatDate(date) {
+  if (!date) {
+    return "Not set";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${date}T00:00:00`));
+}
+
+function soonestExpiry(vehicle) {
+  return [vehicle.istamara_expiry, vehicle.fahas_expiry_date, vehicle.insurance_expiry_date].filter(Boolean).sort()[0];
+}
+
+export default async function VehiclesPage({ searchParams }) {
+  const { profile } = await requireCurrentUserProfile();
+  const isAdmin = profile?.role === "admin";
+  const params = await searchParams;
+  const vehicles = await listVehicles();
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Records</p>
+            <h1 className="mt-2 text-2xl font-semibold text-slate-950">Vehicles</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              Manage fleet records, istamara, fahas, insurance, documents, and expiry dates.
+            </p>
+          </div>
+          {isAdmin ? (
+            <Link
+              href="/dashboard/vehicles/new"
+              className="rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Add Vehicle
+            </Link>
+          ) : null}
+        </div>
+      </section>
+
+      {params?.error ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {params.error}
+        </div>
+      ) : null}
+
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <Header>Name</Header>
+                <Header>Type</Header>
+                <Header>Vehicle No.</Header>
+                <Header>Istamara</Header>
+                <Header>Fahas</Header>
+                <Header>Insurance</Header>
+                <Header>Status</Header>
+                <Header>Files</Header>
+                {isAdmin ? <Header>Actions</Header> : null}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {vehicles.map((vehicle) => (
+                <tr key={vehicle.id}>
+                  <Cell strong>{vehicle.vehicle_name}</Cell>
+                  <Cell>{vehicle.type || "Not set"}</Cell>
+                  <Cell>{vehicle.vehicle_number || "Not set"}</Cell>
+                  <Cell>{formatDate(vehicle.istamara_expiry)}</Cell>
+                  <Cell>{formatDate(vehicle.fahas_expiry_date)}</Cell>
+                  <Cell>{formatDate(vehicle.insurance_expiry_date)}</Cell>
+                  <Cell>
+                    <ExpiryBadge date={soonestExpiry(vehicle)} />
+                  </Cell>
+                  <Cell>
+                    <div className="flex gap-3">
+                      {vehicle.istamara_file_url ? (
+                        <a href={vehicle.istamara_file_url} target="_blank" rel="noreferrer" className="font-semibold text-slate-950 underline underline-offset-4">
+                          Istamara
+                        </a>
+                      ) : null}
+                      {vehicle.insurance_upload_url ? (
+                        <a href={vehicle.insurance_upload_url} target="_blank" rel="noreferrer" className="font-semibold text-slate-950 underline underline-offset-4">
+                          Insurance
+                        </a>
+                      ) : null}
+                      {!vehicle.istamara_file_url && !vehicle.insurance_upload_url ? "Missing" : null}
+                    </div>
+                  </Cell>
+                  {isAdmin ? (
+                    <Cell>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/dashboard/vehicles/${vehicle.id}/edit`}
+                          className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          Edit
+                        </Link>
+                        <form action={deleteVehicle}>
+                          <input type="hidden" name="id" value={vehicle.id} />
+                          <button
+                            type="submit"
+                            className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                          >
+                            Delete
+                          </button>
+                        </form>
+                      </div>
+                    </Cell>
+                  ) : null}
+                </tr>
+              ))}
+              {vehicles.length === 0 ? (
+                <tr>
+                  <td colSpan={isAdmin ? 9 : 8} className="px-5 py-12 text-center text-sm text-slate-500">
+                    No vehicles added yet.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Header({ children }) {
+  return (
+    <th className="whitespace-nowrap px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+      {children}
+    </th>
+  );
+}
+
+function Cell({ children, strong = false }) {
+  return (
+    <td className={`whitespace-nowrap px-5 py-4 text-sm ${strong ? "font-semibold text-slate-950" : "text-slate-600"}`}>
+      {children}
+    </td>
+  );
+}
