@@ -42,7 +42,7 @@ export default async function EmployeesPage({ searchParams }) {
   if (!isAdmin) {
     if (!employees.length) {
       return (
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">My Details</p>
           <h1 className="mt-2 text-2xl font-semibold text-slate-950">No Employee Record Linked</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -58,7 +58,7 @@ export default async function EmployeesPage({ searchParams }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Records</p>
@@ -69,7 +69,7 @@ export default async function EmployeesPage({ searchParams }) {
           </div>
           <Link
             href="/dashboard/employees/new"
-            className="rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
           >
             Add Employee
           </Link>
@@ -82,7 +82,7 @@ export default async function EmployeesPage({ searchParams }) {
         </div>
       ) : null}
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">

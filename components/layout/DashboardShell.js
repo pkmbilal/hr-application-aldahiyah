@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { dashboardNavItems } from "@/lib/navigation";
 import { logout } from "@/app/dashboard/actions";
+import { DashboardNavLink } from "@/components/layout/DashboardNavLink";
 
 export function DashboardShell({ children, profile }) {
   const isAdmin = profile?.role === "admin";
@@ -18,72 +19,58 @@ export function DashboardShell({ children, profile }) {
   });
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-950">
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-slate-200 bg-white lg:block">
-        <div className="flex h-20 items-center border-b border-slate-200 px-5">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-[290px] border-r border-gray-200 bg-white lg:block">
+        <div className="flex h-[76px] items-center border-b border-gray-200 px-6">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-sm font-semibold text-white shadow-sm shadow-blue-200">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500 text-sm font-semibold text-white shadow-theme-sm">
               HR
             </span>
             <span>
-              <span className="block text-sm font-semibold text-slate-950">HR Aldahiyah</span>
-              <span className="block text-xs text-slate-500">Office Control Panel</span>
+              <span className="block text-base font-semibold text-gray-900">HR Aldahiyah</span>
+              <span className="block text-xs font-medium text-gray-500">Office Control Panel</span>
             </span>
           </Link>
         </div>
 
-        <nav className="space-y-1.5 px-4 py-5">
+        <nav className="space-y-1.5 px-4 py-6">
+          <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Menu</p>
           {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-xs font-semibold text-slate-500">
-                {item.initial}
-              </span>
-              {item.label}
-            </Link>
+            <DashboardNavLink key={item.href} item={item} />
           ))}
         </nav>
 
-        <div className="absolute inset-x-4 bottom-4 rounded-lg border border-slate-200 bg-slate-50 p-4 shadow-sm">
-          <p className="truncate text-sm font-semibold text-slate-950">{displayName}</p>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-blue-600">{roleLabel}</p>
+        <div className="absolute inset-x-4 bottom-4 rounded-xl border border-gray-200 bg-gray-25 p-4 shadow-theme-sm">
+          <p className="truncate text-sm font-semibold text-gray-900">{displayName}</p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-brand-600">{roleLabel}</p>
         </div>
       </aside>
 
-      <div className="lg:pl-72">
-        <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-          <div className="flex min-h-16 flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <div className="lg:pl-[290px]">
+        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/95 shadow-theme-sm backdrop-blur">
+          <div className="flex min-h-[76px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Internal dashboard</p>
-              <h1 className="text-lg font-semibold text-slate-950">Office Records</h1>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Internal dashboard</p>
+              <h1 className="text-lg font-semibold text-gray-900">Office Records</h1>
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
-                <p className="max-w-44 truncate text-sm font-semibold text-slate-950">{displayName}</p>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{roleLabel}</p>
+                <p className="max-w-44 truncate text-sm font-semibold text-gray-900">{displayName}</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{roleLabel}</p>
               </div>
               <form action={logout}>
                 <button
                   type="submit"
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
                 >
                   Sign Out
                 </button>
               </form>
             </div>
           </div>
-          <nav className="flex gap-2 overflow-x-auto border-t border-slate-100 px-4 py-2 lg:hidden">
+          <nav className="flex gap-2 overflow-x-auto border-t border-gray-100 px-4 py-2 lg:hidden">
             {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-              >
-                {item.label}
-              </Link>
+              <DashboardNavLink key={item.href} item={item} compact />
             ))}
           </nav>
         </header>

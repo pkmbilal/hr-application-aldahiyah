@@ -3,7 +3,7 @@ import { ExpiryBadge } from "@/components/dashboard/ExpiryBadge";
 export function EmployeeDetail({ employee }) {
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Employee</p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-950">{employee.name}</h1>
         <p className="mt-2 text-sm text-slate-600">{employee.email || "No email recorded"}</p>
@@ -46,7 +46,7 @@ export function EmployeeDetail({ employee }) {
 
 function Section({ title, children }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
       <h2 className="text-base font-semibold text-slate-950">{title}</h2>
       <div className="mt-5 grid gap-4 lg:grid-cols-3">{children}</div>
     </section>
