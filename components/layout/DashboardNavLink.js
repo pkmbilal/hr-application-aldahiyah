@@ -51,6 +51,14 @@ const iconPaths = {
       <path d="M7 12.25h10.75" />
     </>
   ),
+  "Site Allowance": (
+    <>
+      <path d="M7 4.75h10A2.25 2.25 0 0 1 19.25 7v10A2.25 2.25 0 0 1 17 19.25H7A2.25 2.25 0 0 1 4.75 17V7A2.25 2.25 0 0 1 7 4.75Z" />
+      <path d="M8.5 9h7" />
+      <path d="M8.5 12h7" />
+      <path d="M8.5 15h3" />
+    </>
+  ),
 };
 
 export function DashboardNavLink({ item, compact = false }) {

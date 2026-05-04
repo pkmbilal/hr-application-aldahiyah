@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }) {
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-10">
       <section className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-10 shadow-theme-sm">
         <div className="mb-8">
-          <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500 text-sm font-semibold text-white shadow-theme-sm">
+          <div className="mb-5 inline-flex aspect-square h-12 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-sm font-semibold leading-none text-white shadow-theme-sm">
             HR
           </div>
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Secure access</p>

@@ -28,7 +28,13 @@ export function DashboardShell({ children, profile }) {
       return 0;
     }
 
-    const employeeOrder = ["/dashboard", "/dashboard/employees", "/dashboard/instruments", "/dashboard/vehicles"];
+    const employeeOrder = [
+      "/dashboard",
+      "/dashboard/employees",
+      "/dashboard/site-allowance",
+      "/dashboard/instruments",
+      "/dashboard/vehicles",
+    ];
     return employeeOrder.indexOf(first.href) - employeeOrder.indexOf(second.href);
   });
 
