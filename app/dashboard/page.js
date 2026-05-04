@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ModuleCard } from "@/components/dashboard/ModuleCard";
+import { ExpiryBadge } from "@/components/dashboard/ExpiryBadge";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { getDashboardMetrics } from "@/lib/dashboard";
-import { moduleCards } from "@/lib/navigation";
+import { getDashboardMetrics, getEmployeeDashboardMetrics } from "@/lib/dashboard";
+import { requireCurrentUserProfile } from "@/lib/auth";
 
 export const metadata = {
   title: "Dashboard | HR Aldahiyah",
@@ -17,6 +17,13 @@ function formatDate(date) {
 }
 
 export default async function DashboardPage() {
+  const { profile } = await requireCurrentUserProfile();
+
+  if (profile?.role !== "admin") {
+    const employeeMetrics = await getEmployeeDashboardMetrics();
+    return <EmployeeDashboard metrics={employeeMetrics} />;
+  }
+
   const metrics = await getDashboardMetrics();
   const dashboardStats = [
     {
@@ -91,13 +98,7 @@ export default async function DashboardPage() {
         ))}
       </section>
 
-      {/* <section className="grid gap-4 xl:grid-cols-3">
-        {moduleCards.map((card) => (
-          <ModuleCard key={card.title} {...card} />
-        ))}
-      </section> */}
-
-      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+      <section>
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
           <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
             <div>
@@ -138,14 +139,150 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-sm">
-          <h2 className="text-base font-semibold text-gray-900">Access Rules</h2>
-          <div className="mt-4 space-y-3">
-            <RuleItem label="Admin" text="Full create, read, update, and delete access across all modules." />
-            <RuleItem label="Employee" text="Read-only access to instruments and vehicles, plus own employee profile." />
-            <RuleItem label="Files" text="Private storage with signed links for document access." />
+      </section>
+    </div>
+  );
+}
+
+function EmployeeDashboard({ metrics }) {
+  const employee = metrics.employee;
+
+  if (!employee) {
+    return (
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">My Dashboard</p>
+        <h1 className="mt-2 text-2xl font-semibold text-gray-900">No Employee Record Linked</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
+          Your login is active, but an admin has not linked your account to an employee record yet.
+        </p>
+      </section>
+    );
+  }
+
+  const employeeStats = [
+    {
+      label: "Expired",
+      value: metrics.expiredCount,
+      tone: "rose",
+      badge: "Action",
+      note: "Your expired documents or IDs",
+    },
+    {
+      label: "Expiring Soon",
+      value: metrics.expiringSoonCount,
+      tone: "amber",
+      badge: "30 days",
+      note: "Your documents or IDs due soon",
+    },
+    {
+      label: "Passport",
+      value: employee.passport_expiry ? formatDate(employee.passport_expiry) : "Missing",
+      tone: "blue",
+      badge: "Expiry",
+      note: employee.passport_number || "No passport number recorded",
+    },
+    {
+      label: "Iqama",
+      value: employee.iqama_expiry ? formatDate(employee.iqama_expiry) : "Missing",
+      tone: "emerald",
+      badge: "Expiry",
+      note: employee.iqama_number || "No iqama number recorded",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
+        <div className="grid gap-0 lg:grid-cols-[1.35fr_0.65fr]">
+          <div className="p-6">
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">My Dashboard</p>
+            <h1 className="mt-2 text-2xl font-semibold text-gray-900">{employee.name}</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
+              View your linked employee information and track your own expired or upcoming document dates.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href="/dashboard/employees"
+                className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
+              >
+                Open My Details
+              </Link>
+              <Link
+                href="/dashboard/instruments"
+                className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
+              >
+                View Instruments
+              </Link>
+            </div>
           </div>
-        </div> */}
+          <div className="border-t border-gray-200 bg-gray-25 p-6 lg:border-l lg:border-t-0">
+            <p className="text-sm font-semibold text-gray-900">My Expiry Health</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <MiniMetric label="Expired" value={metrics.expiredCount} tone="rose" />
+              <MiniMetric label="Soon" value={metrics.expiringSoonCount} tone="amber" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {employeeStats.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
+        ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
+          <div className="border-b border-gray-200 px-5 py-4">
+            <h2 className="text-base font-semibold text-gray-900">My Expiry Watchlist</h2>
+            <p className="mt-1 text-sm text-gray-500">Only your expired items and items due within 30 days.</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {metrics.expiryItems.map((item) => (
+              <Link
+                key={`${item.type}-${item.title}-${item.label}-${item.date}`}
+                href={item.href}
+                className="grid gap-3 px-5 py-4 transition hover:bg-gray-50 sm:grid-cols-[1fr_auto]"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{item.label}</p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {item.type} · {item.title} · {formatDate(item.date)}
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex h-fit rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ${
+                    item.status === "Expired"
+                      ? "bg-rose-50 text-rose-700 ring-rose-100"
+                      : "bg-amber-50 text-amber-700 ring-amber-100"
+                  }`}
+                >
+                  {item.status}
+                </span>
+              </Link>
+            ))}
+            {!metrics.expiryItems.length ? (
+              <div className="px-5 py-12 text-center">
+                <p className="text-sm font-semibold text-gray-900">No urgent expiries</p>
+                <p className="mt-1 text-sm text-gray-500">None of your documents are expired or due soon.</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-sm">
+          <h2 className="text-base font-semibold text-gray-900">My Information</h2>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <InfoItem label="Email" value={employee.email} />
+            <InfoItem label="Company Mobile" value={employee.company_mobile_number} />
+            <InfoItem label="Personal Mobile" value={employee.personal_mobile_number} />
+            <InfoItem label="Blood Group" value={employee.blood_group} />
+            <InfoItem label="License Expiry" value={employee.license_expiry ? formatDate(employee.license_expiry) : null} />
+            <InfoItem label="Muqeem Expiry" value={employee.muqeem_expiry_date ? formatDate(employee.muqeem_expiry_date) : null} />
+            <InfoItem label="JCC Card Expiry" value={employee.jcc_card_expiry_date ? formatDate(employee.jcc_card_expiry_date) : null} />
+            <InfoItem label="Bank Account" value={employee.bank_account_number} />
+          </div>
+        </div>
       </section>
     </div>
   );
@@ -162,11 +299,11 @@ function MiniMetric({ label, value, tone }) {
   );
 }
 
-function RuleItem({ label, text }) {
+function InfoItem({ label, value }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-gray-25 p-4">
       <p className="text-sm font-semibold text-gray-900">{label}</p>
-      <p className="mt-1 text-sm leading-6 text-gray-500">{text}</p>
+      <p className="mt-1 text-sm leading-6 text-gray-500">{value || "Not set"}</p>
     </div>
   );
 }

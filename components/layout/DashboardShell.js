@@ -8,6 +8,13 @@ export function DashboardShell({ children, profile }) {
   const displayName = profile?.full_name || profile?.email || "Office User";
   const roleLabel = isAdmin ? "Admin" : "Employee";
   const navItems = dashboardNavItems.map((item) => {
+    if (item.href === "/dashboard" && !isAdmin) {
+      return {
+        ...item,
+        label: "My Dashboard",
+      };
+    }
+
     if (item.href === "/dashboard/employees" && !isAdmin) {
       return {
         ...item,
@@ -16,6 +23,13 @@ export function DashboardShell({ children, profile }) {
     }
 
     return item;
+  }).sort((first, second) => {
+    if (isAdmin) {
+      return 0;
+    }
+
+    const employeeOrder = ["/dashboard", "/dashboard/employees", "/dashboard/instruments", "/dashboard/vehicles"];
+    return employeeOrder.indexOf(first.href) - employeeOrder.indexOf(second.href);
   });
 
   return (
