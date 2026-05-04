@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { deleteSiteAllowance } from "@/app/dashboard/site-allowance/actions";
+import { DeleteConfirmationButton } from "@/components/dashboard/DeleteConfirmationButton";
 import { requireCurrentUserProfile } from "@/lib/auth";
 import { formatClaimMonth, formatCurrency, formatDate, listSiteAllowances } from "@/lib/site-allowance";
 
@@ -99,15 +100,14 @@ export default async function SiteAllowancePage({ searchParams }) {
                             </Link>
                           ) : null}
                           {isAdmin || canEmployeeEdit ? (
-                            <form action={deleteSiteAllowance}>
-                              <input type="hidden" name="id" value={allowance.id} />
-                              <button
-                                type="submit"
-                                className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
-                              >
-                                Delete
-                              </button>
-                            </form>
+                            <DeleteConfirmationButton
+                              action={deleteSiteAllowance}
+                              title="Delete Site Allowance"
+                              message="Do you want to delete this site allowance?"
+                              detail={`${formatClaimMonth(allowance.claim_month)} allowance will be removed.`}
+                              confirmLabel="Delete Allowance"
+                              fields={[{ name: "id", value: allowance.id }]}
+                            />
                           ) : null}
                         </div>
                       </Cell>

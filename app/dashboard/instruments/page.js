@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { deleteInstrument } from "@/app/dashboard/instruments/actions";
+import { DeleteConfirmationButton } from "@/components/dashboard/DeleteConfirmationButton";
 import { ExpiryBadge } from "@/components/dashboard/ExpiryBadge";
 import { requireCurrentUserProfile } from "@/lib/auth";
 import { listInstruments } from "@/lib/instruments";
@@ -104,20 +105,17 @@ export default async function InstrumentsPage({ searchParams }) {
                         >
                           Edit
                         </Link>
-                        <form action={deleteInstrument}>
-                          <input type="hidden" name="id" value={instrument.id} />
-                          <input
-                            type="hidden"
-                            name="calibration_file_path"
-                            value={instrument.calibration_file_path || ""}
-                          />
-                          <button
-                            type="submit"
-                            className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
-                          >
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteConfirmationButton
+                          action={deleteInstrument}
+                          title="Delete Instrument"
+                          message="Do you want to delete this instrument?"
+                          detail={`${instrument.name} will be removed from instrument records.`}
+                          confirmLabel="Delete Instrument"
+                          fields={[
+                            { name: "id", value: instrument.id },
+                            { name: "calibration_file_path", value: instrument.calibration_file_path || "" },
+                          ]}
+                        />
                       </div>
                     </Cell>
                   ) : null}

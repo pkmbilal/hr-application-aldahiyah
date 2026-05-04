@@ -205,7 +205,7 @@ function EmployeeDashboard({ metrics }) {
                 href="/dashboard/employees"
                 className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
               >
-                Open My Details
+                Open Profile
               </Link>
               <Link
                 href="/dashboard/site-allowance"

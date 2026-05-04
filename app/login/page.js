@@ -28,7 +28,7 @@ export default async function LoginPage({ searchParams }) {
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Secure access</p>
           <h1 className="mt-2 text-2xl font-semibold text-gray-900">Sign in to HR Aldahiyah</h1>
           <p className="mt-2 text-sm leading-6 text-gray-500">
-            Enter your office account details to continue to the dashboard.
+            Sign in with your office account.
           </p>
         </div>
 

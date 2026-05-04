@@ -11,14 +11,14 @@ export function DashboardShell({ children, profile }) {
     if (item.href === "/dashboard" && !isAdmin) {
       return {
         ...item,
-        label: "My Dashboard",
+        label: "Dashboard",
       };
     }
 
     if (item.href === "/dashboard/employees" && !isAdmin) {
       return {
         ...item,
-        label: "My Details",
+        label: "Profile",
       };
     }
 
