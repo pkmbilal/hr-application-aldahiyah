@@ -11,14 +11,14 @@ export function DashboardShell({ children, profile }) {
     if (item.href === "/dashboard" && !isAdmin) {
       return {
         ...item,
-        label: "My Dashboard",
+        label: "Dashboard",
       };
     }
 
     if (item.href === "/dashboard/employees" && !isAdmin) {
       return {
         ...item,
-        label: "My Details",
+        label: "Profile",
       };
     }
 
@@ -28,7 +28,13 @@ export function DashboardShell({ children, profile }) {
       return 0;
     }
 
-    const employeeOrder = ["/dashboard", "/dashboard/employees", "/dashboard/instruments", "/dashboard/vehicles"];
+    const employeeOrder = [
+      "/dashboard",
+      "/dashboard/employees",
+      "/dashboard/site-allowance",
+      "/dashboard/instruments",
+      "/dashboard/vehicles",
+    ];
     return employeeOrder.indexOf(first.href) - employeeOrder.indexOf(second.href);
   });
 

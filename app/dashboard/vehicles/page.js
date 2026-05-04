@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { deleteVehicle } from "@/app/dashboard/vehicles/actions";
+import { DeleteConfirmationButton } from "@/components/dashboard/DeleteConfirmationButton";
 import { ExpiryBadge } from "@/components/dashboard/ExpiryBadge";
 import { requireCurrentUserProfile } from "@/lib/auth";
 import { listVehicles } from "@/lib/vehicles";
@@ -110,15 +111,14 @@ export default async function VehiclesPage({ searchParams }) {
                         >
                           Edit
                         </Link>
-                        <form action={deleteVehicle}>
-                          <input type="hidden" name="id" value={vehicle.id} />
-                          <button
-                            type="submit"
-                            className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
-                          >
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteConfirmationButton
+                          action={deleteVehicle}
+                          title="Delete Vehicle"
+                          message="Do you want to delete this vehicle?"
+                          detail={`${vehicle.vehicle_name} will be removed from vehicle records.`}
+                          confirmLabel="Delete Vehicle"
+                          fields={[{ name: "id", value: vehicle.id }]}
+                        />
                       </div>
                     </Cell>
                   ) : null}

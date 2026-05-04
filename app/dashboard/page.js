@@ -75,10 +75,10 @@ export default async function DashboardPage() {
                 Review Employees
               </Link>
               <Link
-                href="/dashboard/instruments"
+                href="/dashboard/site-allowance"
                 className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
               >
-                Check Instruments
+                Site Allowance
               </Link>
             </div>
           </div>
@@ -205,13 +205,13 @@ function EmployeeDashboard({ metrics }) {
                 href="/dashboard/employees"
                 className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
               >
-                Open My Details
+                Open Profile
               </Link>
               <Link
-                href="/dashboard/instruments"
+                href="/dashboard/site-allowance"
                 className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
               >
-                View Instruments
+                Site Allowance
               </Link>
             </div>
           </div>

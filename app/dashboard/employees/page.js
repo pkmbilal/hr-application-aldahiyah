@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { deleteEmployee } from "@/app/dashboard/employees/actions";
 import { ExpiryBadge } from "@/components/dashboard/ExpiryBadge";
+import { DeleteEmployeeButton } from "@/components/employees/DeleteEmployeeButton";
 import { EmployeeDetail } from "@/components/employees/EmployeeDetail";
 import { requireCurrentUserProfile } from "@/lib/auth";
 import { getEmployee, listEmployees } from "@/lib/employees";
@@ -119,15 +119,7 @@ export default async function EmployeesPage({ searchParams }) {
                       >
                         Edit
                       </Link>
-                      <form action={deleteEmployee}>
-                        <input type="hidden" name="id" value={employee.id} />
-                        <button
-                          type="submit"
-                          className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
-                        >
-                          Delete
-                        </button>
-                      </form>
+                      <DeleteEmployeeButton employeeId={employee.id} employeeName={employee.name} />
                     </div>
                   </Cell>
                 </tr>
