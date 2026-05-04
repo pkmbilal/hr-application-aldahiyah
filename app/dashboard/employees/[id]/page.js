@@ -23,7 +23,7 @@ export default async function EmployeeDetailsPage({ params }) {
         <div className="flex justify-end">
           <Link
             href={`/dashboard/employees/${employee.id}/edit`}
-            className="rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
           >
             Edit Employee
           </Link>

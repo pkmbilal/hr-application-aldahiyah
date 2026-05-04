@@ -20,7 +20,7 @@ export default async function NewEmployeePage({ searchParams }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Admin</p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-950">Add Employee</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">

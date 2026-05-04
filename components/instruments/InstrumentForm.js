@@ -1,6 +1,8 @@
+import Link from "next/link";
+
 export function InstrumentForm({ action, instrument, error }) {
   return (
-    <form action={action} className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <form action={action} className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
       {error ? (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
           {error}
@@ -48,15 +50,15 @@ export function InstrumentForm({ action, instrument, error }) {
       </div>
 
       <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-5">
-        <a
+        <Link
           href="/dashboard/instruments"
           className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           Cancel
-        </a>
+        </Link>
         <button
           type="submit"
-          className="rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
         >
           Save Instrument
         </button>
