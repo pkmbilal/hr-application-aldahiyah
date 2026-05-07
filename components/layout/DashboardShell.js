@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { dashboardNavItems } from "@/lib/navigation";
 import { logout } from "@/app/dashboard/actions";
+import { DesktopUserMenu } from "@/components/layout/DesktopUserMenu";
 import { DashboardNavLink } from "@/components/layout/DashboardNavLink";
+import { MobileHeaderTitle } from "@/components/layout/MobileHeaderTitle";
 import { MobileMoreNav } from "@/components/layout/MobileMoreNav";
+import { MobileUserMenu } from "@/components/layout/MobileUserMenu";
 
 export function DashboardShell({ children, profile }) {
   const isAdmin = profile?.role === "admin";
   const displayName = profile?.full_name || profile?.email || "Office User";
+  const email = profile?.email || "";
   const roleLabel = isAdmin ? "Admin" : "Employee";
   const navItems = dashboardNavItems.map((item) => {
     if (item.href === "/dashboard" && !isAdmin) {
@@ -72,14 +76,11 @@ export function DashboardShell({ children, profile }) {
       <div className="lg:pl-[290px]">
         <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/95 shadow-theme-sm backdrop-blur">
           <div className="flex min-h-[64px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:min-h-[76px] lg:px-8">
-            <Link href="/dashboard" className="flex items-center gap-3 lg:hidden">
+            <Link href="/dashboard" className="flex min-w-0 items-center gap-3 lg:hidden">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-sm font-semibold text-white shadow-theme-sm">
                 HR
               </span>
-              <span>
-                <span className="block text-sm font-semibold text-gray-900">HR Aldahiyah</span>
-                <span className="block text-xs font-medium text-gray-500">{roleLabel}</span>
-              </span>
+              <MobileHeaderTitle />
             </Link>
 
             <div className="hidden lg:block">
@@ -87,18 +88,8 @@ export function DashboardShell({ children, profile }) {
               <h1 className="text-lg font-semibold text-gray-900">Office Records</h1>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden text-right sm:block">
-                <p className="max-w-44 truncate text-sm font-semibold text-gray-900">{displayName}</p>
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{roleLabel}</p>
-              </div>
-              <form action={logout}>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50 sm:px-3.5 sm:py-2.5"
-                >
-                  Sign Out
-                </button>
-              </form>
+              <DesktopUserMenu displayName={displayName} email={email} roleLabel={roleLabel} logoutAction={logout} />
+              <MobileUserMenu displayName={displayName} email={email} roleLabel={roleLabel} logoutAction={logout} />
             </div>
           </div>
         </header>
