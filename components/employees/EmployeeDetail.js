@@ -3,9 +3,9 @@ import { ExpiryBadge } from "@/components/dashboard/ExpiryBadge";
 export function EmployeeDetail({ employee }) {
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Employee</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-950">{employee.name}</h1>
+        <h1 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">{employee.name}</h1>
         <p className="mt-2 text-sm text-slate-600">{employee.email || "No email recorded"}</p>
       </section>
 
@@ -46,16 +46,16 @@ export function EmployeeDetail({ employee }) {
 
 function Section({ title, children }) {
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+    <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
       <h2 className="text-base font-semibold text-slate-950">{title}</h2>
-      <div className="mt-5 grid gap-4 lg:grid-cols-3">{children}</div>
+      <div className="mt-4 grid gap-3 sm:mt-5 sm:gap-4 lg:grid-cols-3">{children}</div>
     </section>
   );
 }
 
 function Item({ label, value }) {
   return (
-    <div>
+    <div className="rounded-lg bg-slate-50 p-3 sm:bg-transparent sm:p-0">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 text-sm font-medium text-slate-950">{value || "Not set"}</p>
     </div>
@@ -64,7 +64,7 @@ function Item({ label, value }) {
 
 function DateItem({ label, value }) {
   return (
-    <div>
+    <div className="rounded-lg bg-slate-50 p-3 sm:bg-transparent sm:p-0">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <div className="mt-1 flex items-center gap-2">
         <p className="text-sm font-medium text-slate-950">{value || "Not set"}</p>
@@ -76,7 +76,7 @@ function DateItem({ label, value }) {
 
 function FileItem({ label, url }) {
   return (
-    <div>
+    <div className="rounded-lg bg-slate-50 p-3 sm:bg-transparent sm:p-0">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       {url ? (
         <a href={url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm font-semibold text-slate-950 underline underline-offset-4">

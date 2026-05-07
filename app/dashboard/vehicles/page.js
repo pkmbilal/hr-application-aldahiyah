@@ -33,11 +33,11 @@ export default async function VehiclesPage({ searchParams }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Records</p>
-            <h1 className="mt-2 text-2xl font-semibold text-slate-950">Vehicles</h1>
+            <h1 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Vehicles</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Manage fleet records, istamara, fahas, insurance, documents, and expiry dates.
             </p>
@@ -45,7 +45,7 @@ export default async function VehiclesPage({ searchParams }) {
           {isAdmin ? (
             <Link
               href="/dashboard/vehicles/new"
-              className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 sm:min-h-0"
             >
               Add Vehicle
             </Link>
@@ -59,8 +59,66 @@ export default async function VehiclesPage({ searchParams }) {
         </div>
       ) : null}
 
-      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
-        <div className="overflow-x-auto">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
+        <div className="divide-y divide-slate-100 md:hidden">
+          {vehicles.map((vehicle) => (
+            <article key={vehicle.id} className="space-y-4 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold text-slate-950">{vehicle.vehicle_name}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {vehicle.type || "No type"} · {vehicle.vehicle_number || "No number"}
+                  </p>
+                </div>
+                <ExpiryBadge date={soonestExpiry(vehicle)} />
+              </div>
+              <div className="grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-3">
+                <MiniItem label="Istamara" value={formatDate(vehicle.istamara_expiry)} />
+                <MiniItem label="Fahas" value={formatDate(vehicle.fahas_expiry_date)} />
+                <MiniItem label="Insurance" value={formatDate(vehicle.insurance_expiry_date)} />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {vehicle.istamara_file_url ? (
+                  <a href={vehicle.istamara_file_url} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700">
+                    Istamara
+                  </a>
+                ) : null}
+                {vehicle.insurance_upload_url ? (
+                  <a href={vehicle.insurance_upload_url} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700">
+                    Insurance
+                  </a>
+                ) : null}
+                {!vehicle.istamara_file_url && !vehicle.insurance_upload_url ? (
+                  <span className="inline-flex min-h-10 items-center rounded-lg bg-slate-100 px-3 text-sm font-semibold text-slate-500">
+                    Files Missing
+                  </span>
+                ) : null}
+                {isAdmin ? (
+                  <>
+                    <Link
+                      href={`/dashboard/vehicles/${vehicle.id}/edit`}
+                      className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700"
+                    >
+                      Edit
+                    </Link>
+                    <DeleteConfirmationButton
+                      action={deleteVehicle}
+                      title="Delete Vehicle"
+                      message="Do you want to delete this vehicle?"
+                      detail={`${vehicle.vehicle_name} will be removed from vehicle records.`}
+                      confirmLabel="Delete Vehicle"
+                      fields={[{ name: "id", value: vehicle.id }]}
+                    />
+                  </>
+                ) : null}
+              </div>
+            </article>
+          ))}
+          {vehicles.length === 0 ? (
+            <div className="px-5 py-12 text-center text-sm text-slate-500">No vehicles added yet.</div>
+          ) : null}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
@@ -152,5 +210,14 @@ function Cell({ children, strong = false }) {
     <td className={`whitespace-nowrap px-5 py-4 text-sm ${strong ? "font-semibold text-slate-950" : "text-slate-600"}`}>
       {children}
     </td>
+  );
+}
+
+function MiniItem({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 truncate text-xs font-semibold text-slate-950">{value}</p>
+    </div>
   );
 }

@@ -30,11 +30,11 @@ export default async function InstrumentsPage({ searchParams }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Records</p>
-            <h1 className="mt-2 text-2xl font-semibold text-slate-950">Instruments</h1>
+            <h1 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Instruments</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Track equipment, serial numbers, calibration dates, and calibration certificates.
             </p>
@@ -42,7 +42,7 @@ export default async function InstrumentsPage({ searchParams }) {
           {isAdmin ? (
             <Link
               href="/dashboard/instruments/new"
-              className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 sm:min-h-0"
             >
               Add Instrument
             </Link>
@@ -56,8 +56,67 @@ export default async function InstrumentsPage({ searchParams }) {
         </div>
       ) : null}
 
-      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
-        <div className="overflow-x-auto">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
+        <div className="divide-y divide-slate-100 md:hidden">
+          {instruments.map((instrument) => (
+            <article key={instrument.id} className="space-y-4 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold text-slate-950">{instrument.name}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {instrument.model_number || "No model"} · {instrument.serial_number || "No serial"}
+                  </p>
+                </div>
+                <ExpiryBadge date={instrument.calibration_due_date} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
+                <MiniItem label="Last" value={formatDate(instrument.last_calibration_date)} />
+                <MiniItem label="Due" value={formatDate(instrument.calibration_due_date)} />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {instrument.calibration_file_url ? (
+                  <a
+                    href={instrument.calibration_file_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700"
+                  >
+                    Open File
+                  </a>
+                ) : (
+                  <span className="inline-flex min-h-10 items-center rounded-lg bg-slate-100 px-3 text-sm font-semibold text-slate-500">
+                    File Missing
+                  </span>
+                )}
+                {isAdmin ? (
+                  <>
+                    <Link
+                      href={`/dashboard/instruments/${instrument.id}/edit`}
+                      className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700"
+                    >
+                      Edit
+                    </Link>
+                    <DeleteConfirmationButton
+                      action={deleteInstrument}
+                      title="Delete Instrument"
+                      message="Do you want to delete this instrument?"
+                      detail={`${instrument.name} will be removed from instrument records.`}
+                      confirmLabel="Delete Instrument"
+                      fields={[
+                        { name: "id", value: instrument.id },
+                        { name: "calibration_file_path", value: instrument.calibration_file_path || "" },
+                      ]}
+                    />
+                  </>
+                ) : null}
+              </div>
+            </article>
+          ))}
+          {instruments.length === 0 ? (
+            <div className="px-5 py-12 text-center text-sm text-slate-500">No instruments added yet.</div>
+          ) : null}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
@@ -149,5 +208,14 @@ function Cell({ children, strong = false }) {
     <td className={`whitespace-nowrap px-5 py-4 text-sm ${strong ? "font-semibold text-slate-950" : "text-slate-600"}`}>
       {children}
     </td>
+  );
+}
+
+function MiniItem({ label, value }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-950">{value}</p>
+    </div>
   );
 }

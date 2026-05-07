@@ -35,7 +35,7 @@ export function ExpiryBadge({ date }) {
   const status = getExpiryStatus(date);
 
   return (
-    <span className={`inline-flex rounded-md px-2 py-1 text-xs font-semibold ring-1 ${status.className}`}>
+    <span className={`inline-flex w-fit shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold leading-none ring-1 ${status.className}`}>
       {status.label}
     </span>
   );

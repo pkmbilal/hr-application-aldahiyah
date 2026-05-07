@@ -11,7 +11,7 @@ export function DeleteEmployeeButton({ employeeId, employeeName }) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+        className="inline-flex min-h-10 items-center rounded-lg border border-rose-200 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 md:min-h-0 md:rounded-md md:py-1.5 md:text-xs"
       >
         Delete
       </button>
@@ -25,11 +25,11 @@ export function DeleteEmployeeButton({ employeeId, employeeName }) {
               {employeeName ? `${employeeName} will be removed from employee records.` : "This employee will be removed from employee records."}
             </p>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 grid gap-3 sm:flex sm:justify-end">
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Cancel
               </button>
@@ -37,7 +37,7 @@ export function DeleteEmployeeButton({ employeeId, employeeName }) {
                 <input type="hidden" name="id" value={employeeId} />
                 <button
                   type="submit"
-                  className="rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700"
+                  className="min-h-11 w-full rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 sm:w-auto"
                 >
                   Delete Employee
                 </button>

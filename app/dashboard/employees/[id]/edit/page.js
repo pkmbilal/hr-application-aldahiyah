@@ -27,9 +27,9 @@ export default async function EditEmployeePage({ params, searchParams }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Admin</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-950">Edit Employee</h1>
+        <h1 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Edit Employee</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
           Update employee details, document expiries, login link, or uploaded files.
         </p>

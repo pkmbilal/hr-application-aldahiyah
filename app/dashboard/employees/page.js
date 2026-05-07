@@ -42,9 +42,9 @@ export default async function EmployeesPage({ searchParams }) {
   if (!isAdmin) {
     if (!employees.length) {
       return (
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+        <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">My Details</p>
-          <h1 className="mt-2 text-2xl font-semibold text-slate-950">No Employee Record Linked</h1>
+          <h1 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">No Employee Record Linked</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Your login account is active, but an admin has not linked it to an employee record yet.
           </p>
@@ -58,18 +58,18 @@ export default async function EmployeesPage({ searchParams }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Records</p>
-            <h1 className="mt-2 text-2xl font-semibold text-slate-950">Employees</h1>
+            <h1 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Employees</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Manage employee contact information, identity documents, expiry dates, and bank details.
             </p>
           </div>
           <Link
             href="/dashboard/employees/new"
-            className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 sm:min-h-0"
           >
             Add Employee
           </Link>
@@ -82,8 +82,47 @@ export default async function EmployeesPage({ searchParams }) {
         </div>
       ) : null}
 
-      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
-        <div className="overflow-x-auto">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
+        <div className="divide-y divide-slate-100 md:hidden">
+          {employees.map((employee) => (
+            <article key={employee.id} className="space-y-4 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <Link href={`/dashboard/employees/${employee.id}`} className="block truncate text-base font-semibold text-slate-950">
+                    {employee.name}
+                  </Link>
+                  <p className="mt-1 truncate text-sm text-slate-500">{employee.email || "No email recorded"}</p>
+                </div>
+                <ExpiryBadge date={soonestExpiry(employee)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
+                <MiniItem label="Company Mobile" value={employee.company_mobile_number || "Not set"} />
+                <MiniItem label="Passport" value={formatDate(employee.passport_expiry)} />
+                <MiniItem label="Iqama" value={formatDate(employee.iqama_expiry)} />
+                <MiniItem label="Personal Mobile" value={employee.personal_mobile_number || "Not set"} />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/dashboard/employees/${employee.id}`}
+                  className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700"
+                >
+                  View
+                </Link>
+                <Link
+                  href={`/dashboard/employees/${employee.id}/edit`}
+                  className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700"
+                >
+                  Edit
+                </Link>
+                <DeleteEmployeeButton employeeId={employee.id} employeeName={employee.name} />
+              </div>
+            </article>
+          ))}
+          {employees.length === 0 ? (
+            <div className="px-5 py-12 text-center text-sm text-slate-500">No employees added yet.</div>
+          ) : null}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
@@ -152,5 +191,14 @@ function Cell({ children, strong = false }) {
     <td className={`whitespace-nowrap px-5 py-4 text-sm ${strong ? "font-semibold text-slate-950" : "text-slate-600"}`}>
       {children}
     </td>
+  );
+}
+
+function MiniItem({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 truncate text-sm font-semibold text-slate-950">{value}</p>
+    </div>
   );
 }
