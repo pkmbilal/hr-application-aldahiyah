@@ -58,11 +58,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
         <div className="grid gap-0 lg:grid-cols-[1.4fr_0.6fr]">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Overview</p>
-            <h1 className="mt-2 text-2xl font-semibold text-gray-900">Office Records Dashboard</h1>
+            <h1 className="mt-2 text-xl font-semibold text-gray-900 sm:text-2xl">Office Records Dashboard</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
               Track employees, instruments, vehicles, uploaded documents, and upcoming expiry dates from one internal
               control panel.
@@ -70,19 +70,19 @@ export default async function DashboardPage() {
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 href="/dashboard/employees"
-                className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
               >
                 Review Employees
               </Link>
               <Link
                 href="/dashboard/site-allowance"
-                className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
               >
                 Site Allowance
               </Link>
             </div>
           </div>
-          <div className="border-t border-gray-200 bg-gray-25 p-6 lg:border-l lg:border-t-0">
+          <div className="border-t border-gray-200 bg-gray-25 p-4 sm:p-6 lg:border-l lg:border-t-0">
             <p className="text-sm font-semibold text-gray-900">Expiry Health</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <MiniMetric label="Expired" value={metrics.expiredCount} tone="rose" />
@@ -99,8 +99,8 @@ export default async function DashboardPage() {
       </section>
 
       <section>
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
-          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
+          <div className="flex items-center justify-between border-b border-rose-100 bg-rose-50 px-5 py-4">
             <div>
               <h2 className="text-base font-semibold text-gray-900">Expiry Watchlist</h2>
               <p className="mt-1 text-sm text-gray-500">Expired items and items due within 30 days.</p>
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
                   </p>
                 </div>
                 <span
-                  className={`inline-flex h-fit rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ${
+                  className={`inline-flex w-fit shrink-0 self-start whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold leading-none ring-1 sm:self-center ${
                     item.status === "Expired"
                       ? "bg-rose-50 text-rose-700 ring-rose-100"
                       : "bg-amber-50 text-amber-700 ring-amber-100"
@@ -149,9 +149,9 @@ function EmployeeDashboard({ metrics }) {
 
   if (!employee) {
     return (
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
         <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">My Dashboard</p>
-        <h1 className="mt-2 text-2xl font-semibold text-gray-900">No Employee Record Linked</h1>
+        <h1 className="mt-2 text-xl font-semibold text-gray-900 sm:text-2xl">No Employee Record Linked</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
           Your login is active, but an admin has not linked your account to an employee record yet.
         </p>
@@ -192,30 +192,30 @@ function EmployeeDashboard({ metrics }) {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
         <div className="grid gap-0 lg:grid-cols-[1.35fr_0.65fr]">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">My Dashboard</p>
-            <h1 className="mt-2 text-2xl font-semibold text-gray-900">{employee.name}</h1>
+            <h1 className="mt-2 text-xl font-semibold text-gray-900 sm:text-2xl">{employee.name}</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
               View your linked employee information and track your own expired or upcoming document dates.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 href="/dashboard/employees"
-                className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
               >
                 Open Profile
               </Link>
               <Link
                 href="/dashboard/site-allowance"
-                className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
               >
                 Site Allowance
               </Link>
             </div>
           </div>
-          <div className="border-t border-gray-200 bg-gray-25 p-6 lg:border-l lg:border-t-0">
+          <div className="border-t border-gray-200 bg-gray-25 p-4 sm:p-6 lg:border-l lg:border-t-0">
             <p className="text-sm font-semibold text-gray-900">My Expiry Health</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <MiniMetric label="Expired" value={metrics.expiredCount} tone="rose" />
@@ -232,7 +232,7 @@ function EmployeeDashboard({ metrics }) {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
           <div className="border-b border-gray-200 px-5 py-4">
             <h2 className="text-base font-semibold text-gray-900">My Expiry Watchlist</h2>
             <p className="mt-1 text-sm text-gray-500">Only your expired items and items due within 30 days.</p>
@@ -251,7 +251,7 @@ function EmployeeDashboard({ metrics }) {
                   </p>
                 </div>
                 <span
-                  className={`inline-flex h-fit rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ${
+                  className={`inline-flex w-fit shrink-0 self-start whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold leading-none ring-1 sm:self-center ${
                     item.status === "Expired"
                       ? "bg-rose-50 text-rose-700 ring-rose-100"
                       : "bg-amber-50 text-amber-700 ring-amber-100"
@@ -270,7 +270,7 @@ function EmployeeDashboard({ metrics }) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-5">
           <h2 className="text-base font-semibold text-gray-900">My Information</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <InfoItem label="Email" value={employee.email} />
@@ -292,16 +292,16 @@ function MiniMetric({ label, value, tone }) {
   const toneClass = tone === "rose" ? "text-rose-700 bg-rose-50 ring-rose-100" : "text-amber-700 bg-amber-50 ring-amber-100";
 
   return (
-    <div className={`rounded-xl p-4 ring-1 ${toneClass}`}>
+    <div className={`rounded-lg p-3 ring-1 sm:rounded-xl sm:p-4 ${toneClass}`}>
       <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
-      <p className="mt-2 text-2xl font-semibold">{value}</p>
+      <p className="mt-2 text-xl font-semibold sm:text-2xl">{value}</p>
     </div>
   );
 }
 
 function InfoItem({ label, value }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-gray-25 p-4">
+    <div className="rounded-lg border border-gray-200 bg-gray-25 p-3 sm:rounded-xl sm:p-4">
       <p className="text-sm font-semibold text-gray-900">{label}</p>
       <p className="mt-1 text-sm leading-6 text-gray-500">{value || "Not set"}</p>
     </div>

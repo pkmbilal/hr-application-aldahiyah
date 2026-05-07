@@ -76,11 +76,14 @@ export function DashboardNavLink({ item, compact = false }) {
     return (
       <Link
         href={item.href}
-        className={`shrink-0 rounded-lg px-3 py-2 text-sm font-semibold transition ${
+        className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 text-[11px] font-semibold leading-tight transition ${
           isActive ? "bg-brand-50 text-brand-600" : "text-gray-500 hover:bg-brand-50 hover:text-brand-600"
         }`}
       >
-        {item.label}
+        <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8">
+          {icon}
+        </svg>
+        <span className="max-w-full truncate">{item.label}</span>
       </Link>
     );
   }

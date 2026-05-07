@@ -17,9 +17,9 @@ export default async function NewInstrumentPage({ searchParams }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm">
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Admin</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-950">Add Instrument</h1>
+        <h1 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Add Instrument</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
           Create an equipment record and optionally upload its calibration certificate.
         </p>

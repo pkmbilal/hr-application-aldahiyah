@@ -14,12 +14,12 @@ const accentClasses = {
 
 export function StatCard({ label, value, tone, note, badge }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-sm">
+    <section className="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-5">
       <span className={`absolute inset-x-0 top-0 h-1 ${accentClasses[tone]}`} />
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-gray-500">{label}</p>
-          <p className="mt-2 text-3xl font-semibold text-gray-900">{value}</p>
+          <p className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">{value}</p>
         </div>
         <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ${toneClasses[tone]}`}>
           {badge}
