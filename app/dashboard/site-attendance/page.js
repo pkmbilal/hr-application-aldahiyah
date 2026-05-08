@@ -28,7 +28,7 @@ export default async function SiteAttendancePage({ searchParams }) {
           </div>
           <Link
             href="/dashboard/site-attendance/new"
-            className="inline-flex min-h-11 w-fit max-w-full self-start whitespace-nowrap items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 sm:min-h-0"
+            className="inline-flex min-h-11 w-full max-w-full whitespace-nowrap items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 sm:min-h-0 sm:w-fit"
           >
             Add Attendance
           </Link>

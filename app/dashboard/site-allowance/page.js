@@ -27,7 +27,7 @@ export default async function SiteAllowancePage({ searchParams }) {
           </div>
           <Link
             href="/dashboard/site-allowance/new"
-            className="inline-flex min-h-11 w-fit items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 sm:min-h-0"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 sm:min-h-0 sm:w-fit"
           >
             Add New
           </Link>
