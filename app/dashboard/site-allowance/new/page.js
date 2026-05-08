@@ -22,7 +22,7 @@ export default async function NewSiteAllowancePage({ searchParams }) {
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Monthly Claim</p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-950">Add Site Allowance</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          Create a monthly outside-job allowance summary with multiple project rows and selected job dates.
+          Create a monthly allowance from unclaimed Site Attendance rows marked as Job.
         </p>
       </section>
 

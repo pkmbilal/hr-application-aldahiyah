@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { updateSiteAllowanceStatus } from "@/app/dashboard/site-allowance/actions";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { formatTime, listAttendanceForAllowance } from "@/lib/site-attendance";
 import { formatClaimMonth, formatCurrency, formatDate, getSiteAllowance } from "@/lib/site-allowance";
 
 export const metadata = {
@@ -20,6 +21,7 @@ export default async function SiteAllowanceDetailPage({ params, searchParams }) 
   }
 
   const canEmployeeEdit = !isAdmin && allowance.status === "Pending";
+  const sourceAttendance = await listAttendanceForAllowance(allowance.id);
 
   return (
     <div className="space-y-6">
@@ -99,6 +101,7 @@ export default async function SiteAllowanceDetailPage({ params, searchParams }) 
       ) : null}
 
       <AllowanceTable allowance={allowance} />
+      <SourceAttendanceTable rows={sourceAttendance} isAdmin={isAdmin} />
     </div>
   );
 }
@@ -142,6 +145,48 @@ function AllowanceTable({ allowance }) {
         <Metric label="Net Total" value={formatCurrency(allowance.net_amount)} strong />
       </div>
       {allowance.notes ? <p className="border-t border-slate-100 px-5 py-4 text-sm text-slate-600">{allowance.notes}</p> : null}
+    </section>
+  );
+}
+
+function SourceAttendanceTable({ rows, isAdmin }) {
+  if (!rows.length) {
+    return null;
+  }
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm">
+      <div className="border-b border-slate-100 px-5 py-4">
+        <h2 className="text-base font-semibold text-slate-950">Source Job Attendance</h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-slate-200">
+          <thead className="bg-slate-50">
+            <tr>
+              {isAdmin ? <Header>Employee</Header> : null}
+              <Header>Date</Header>
+              <Header>Project</Header>
+              <Header>Order No.</Header>
+              <Header>Time</Header>
+              <Header>Notes</Header>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {rows.map((row) => (
+              <tr key={row.id}>
+                {isAdmin ? <Cell strong>{row.employees?.name || "Not linked"}</Cell> : null}
+                <Cell>{formatDate(row.attendance_date)}</Cell>
+                <Cell strong>{row.project_name}</Cell>
+                <Cell>{row.order_no}</Cell>
+                <Cell>
+                  {formatTime(row.enter_time)}-{formatTime(row.exit_time)}
+                </Cell>
+                <Cell>{row.notes || "Not set"}</Cell>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
