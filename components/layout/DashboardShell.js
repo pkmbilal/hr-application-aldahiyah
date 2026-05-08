@@ -7,12 +7,12 @@ import { MobileHeaderTitle } from "@/components/layout/MobileHeaderTitle";
 import { MobileMoreNav } from "@/components/layout/MobileMoreNav";
 import { MobileUserMenu } from "@/components/layout/MobileUserMenu";
 
-export function DashboardShell({ children, profile }) {
+export function DashboardShell({ children, profile, linkedEmployee }) {
   const isAdmin = profile?.role === "admin";
-  const displayName = profile?.full_name || profile?.email || "Office User";
+  const displayName = linkedEmployee?.name || profile?.full_name || profile?.email || "Office User";
   const email = profile?.email || "";
   const roleLabel = isAdmin ? "Admin" : "Employee";
-  const navItems = dashboardNavItems.map((item) => {
+  const navItems = dashboardNavItems.filter((item) => isAdmin || !item.adminOnly).map((item) => {
     if (item.href === "/dashboard" && !isAdmin) {
       return {
         ...item,
@@ -36,14 +36,19 @@ export function DashboardShell({ children, profile }) {
     const employeeOrder = [
       "/dashboard",
       "/dashboard/employees",
+      "/dashboard/site-attendance",
       "/dashboard/site-allowance",
       "/dashboard/instruments",
       "/dashboard/vehicles",
     ];
     return employeeOrder.indexOf(first.href) - employeeOrder.indexOf(second.href);
   });
-  const mobileMoreItems = navItems.filter((item) => item.href === "/dashboard/site-allowance");
-  const mobilePrimaryItems = navItems.filter((item) => item.href !== "/dashboard/site-allowance");
+  const mobileMoreItems = navItems.filter((item) =>
+    ["/dashboard/profile", "/dashboard/site-attendance", "/dashboard/site-allowance", "/dashboard/site-projects"].includes(item.href)
+  );
+  const mobilePrimaryItems = navItems
+    .filter((item) => !["/dashboard/profile", "/dashboard/site-attendance", "/dashboard/site-allowance", "/dashboard/site-projects"].includes(item.href))
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">

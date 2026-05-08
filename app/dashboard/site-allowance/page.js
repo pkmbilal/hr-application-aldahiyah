@@ -22,12 +22,12 @@ export default async function SiteAllowancePage({ searchParams }) {
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Monthly Claims</p>
             <h1 className="mt-2 text-2xl font-semibold text-slate-950">Site Allowance</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Submit and review outside-job allowance summaries with project rows, selected job dates, and payable totals.
+              Submit and review monthly allowance summaries generated from Job site attendance.
             </p>
           </div>
           <Link
             href="/dashboard/site-allowance/new"
-            className="inline-flex min-h-11 w-fit items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 sm:min-h-0"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 sm:min-h-0 sm:w-fit"
           >
             Add New
           </Link>

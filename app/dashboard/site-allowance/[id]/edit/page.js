@@ -35,7 +35,7 @@ export default async function EditSiteAllowancePage({ params, searchParams }) {
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Monthly Claim</p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-950">Edit Site Allowance</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          Update project rows, selected job dates, totals, and approval status.
+          Regenerate payable rows from Job attendance, then update totals and approval status.
         </p>
       </section>
 

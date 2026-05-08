@@ -10,6 +10,7 @@ import {
   calculateAllowanceTotals,
   getLinkedEmployee,
 } from "@/lib/site-allowance";
+import { buildAllowanceItemsFromAttendance, listEligibleJobAttendance } from "@/lib/site-attendance";
 
 function isAdmin(profile) {
   return profile?.role === "admin";
@@ -33,35 +34,6 @@ function normalizeClaimMonth(formData) {
   return /^\d{4}-\d{2}$/.test(month) ? `${month}-01` : null;
 }
 
-function normalizeItems(formData) {
-  let rawItems = [];
-
-  try {
-    rawItems = JSON.parse(String(formData.get("items_json") || "[]"));
-  } catch {
-    rawItems = [];
-  }
-
-  return rawItems
-    .map((item, index) => {
-      const jobDates = Array.isArray(item.job_dates)
-        ? [...new Set(item.job_dates.filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)))].sort()
-        : [];
-      const dayCount = jobDates.length;
-
-      return {
-        serial_no: index + 1,
-        project_details: String(item.project_details || "").trim(),
-        job_dates: jobDates,
-        order_no: String(item.order_no || "").trim() || null,
-        day_count: dayCount,
-        per_day_charge: SITE_ALLOWANCE_DAILY_RATE,
-        total_amount: dayCount * SITE_ALLOWANCE_DAILY_RATE,
-      };
-    })
-    .filter((item) => item.project_details || item.job_dates.length || item.order_no);
-}
-
 async function resolveEmployeeId(profile, formData, basePath) {
   if (isAdmin(profile)) {
     const employeeId = optionalText(formData, "employee_id");
@@ -82,8 +54,10 @@ async function resolveEmployeeId(profile, formData, basePath) {
   return employee.id;
 }
 
-function normalizePayload(formData, employeeId, profile) {
-  const items = normalizeItems(formData);
+async function normalizePayload(formData, employeeId, profile, allowanceId = null) {
+  const claimMonth = normalizeClaimMonth(formData);
+  const attendanceRows = await listEligibleJobAttendance(employeeId, claimMonth, allowanceId);
+  const items = buildAllowanceItemsFromAttendance(attendanceRows, SITE_ALLOWANCE_DAILY_RATE);
   const petrolAmount = optionalNumber(formData, "petrol_amount");
   const otherBillsAmount = optionalNumber(formData, "other_bills_amount");
   const advanceAmount = optionalNumber(formData, "advance_amount");
@@ -94,7 +68,7 @@ function normalizePayload(formData, employeeId, profile) {
   return {
     allowance: {
       employee_id: employeeId,
-      claim_month: normalizeClaimMonth(formData),
+      claim_month: claimMonth,
       summary_date: optionalDate(formData, "summary_date"),
       petrol_amount: petrolAmount,
       other_bills_amount: otherBillsAmount,
@@ -118,11 +92,7 @@ function validatePayload(payload, basePath) {
   }
 
   if (!payload.items.length) {
-    redirect(`${basePath}?error=At least one job row is required.`);
-  }
-
-  if (payload.items.some((item) => !item.project_details || item.job_dates.length === 0)) {
-    redirect(`${basePath}?error=Each job row needs project/company details and at least one job date.`);
+    redirect(`${basePath}?error=No unclaimed Job attendance found for this employee and month.`);
   }
 }
 
@@ -130,7 +100,7 @@ export async function createSiteAllowance(formData) {
   const { profile } = await requireCurrentUserProfile();
   const basePath = "/dashboard/site-allowance/new";
   const employeeId = await resolveEmployeeId(profile, formData, basePath);
-  const payload = normalizePayload(formData, employeeId, profile);
+  const payload = await normalizePayload(formData, employeeId, profile);
 
   if (isAdmin(profile) && !optionalText(formData, "status")) {
     payload.allowance.status = "Approved";
@@ -163,7 +133,10 @@ export async function createSiteAllowance(formData) {
     redirect(`/dashboard/site-allowance/${inserted.id}/edit?error=${encodeURIComponent(itemError.message)}`);
   }
 
+  await lockAttendanceRows(supabase, payload.items, inserted.id);
+
   revalidatePath("/dashboard/site-allowance");
+  revalidatePath("/dashboard/site-attendance");
   redirect(`/dashboard/site-allowance/${inserted.id}`);
 }
 
@@ -173,9 +146,10 @@ export async function updateSiteAllowance(id, formData) {
   const supabase = await createClient();
   const existing = await getEditableAllowance(supabase, id, profile, basePath);
   const employeeId = isAdmin(profile) ? await resolveEmployeeId(profile, formData, basePath) : existing.employee_id;
-  const payload = normalizePayload(formData, employeeId, profile);
+  const payload = await normalizePayload(formData, employeeId, profile, id);
 
   validatePayload(payload, basePath);
+  await unlockAllowanceAttendance(supabase, id);
 
   const statusUpdates = buildStatusUpdates(existing, payload.allowance.status, profile);
   const { error } = await supabase
@@ -204,7 +178,10 @@ export async function updateSiteAllowance(id, formData) {
     redirect(`${basePath}?error=${encodeURIComponent(itemError.message)}`);
   }
 
+  await lockAttendanceRows(supabase, payload.items, id);
+
   revalidatePath("/dashboard/site-allowance");
+  revalidatePath("/dashboard/site-attendance");
   revalidatePath(`/dashboard/site-allowance/${id}`);
   redirect(`/dashboard/site-allowance/${id}`);
 }
@@ -222,6 +199,7 @@ export async function deleteSiteAllowance(formData) {
   }
 
   revalidatePath("/dashboard/site-allowance");
+  revalidatePath("/dashboard/site-attendance");
   redirect("/dashboard/site-allowance");
 }
 
@@ -293,4 +271,31 @@ function buildStatusUpdates(existing, nextStatus, profile) {
     approved_at: nextStatus === "Approved" && existing.status !== "Approved" ? new Date().toISOString() : existing.approved_at,
     paid_at: nextStatus === "Paid" && existing.status !== "Paid" ? new Date().toISOString() : existing.paid_at,
   };
+}
+
+async function lockAttendanceRows(supabase, items, allowanceId) {
+  const attendanceIds = [...new Set(items.flatMap((item) => item.attendance_ids || []))];
+
+  if (!attendanceIds.length) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("lock_site_allowance_attendance", {
+    p_allowance_id: allowanceId,
+    p_attendance_ids: attendanceIds,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function unlockAllowanceAttendance(supabase, allowanceId) {
+  const { error } = await supabase.rpc("unlock_site_allowance_attendance", {
+    p_allowance_id: allowanceId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
