@@ -82,12 +82,40 @@ const iconPaths = {
       <path d="M15.75 9.25h.01" />
     </>
   ),
+  "File Manager": (
+    <>
+      <path d="M4.75 7.75A2.75 2.75 0 0 1 7.5 5h3.75l2 2.25h3.25A2.75 2.75 0 0 1 19.25 10v6.25A2.75 2.75 0 0 1 16.5 19h-9a2.75 2.75 0 0 1-2.75-2.75v-8.5Z" />
+      <path d="M8 12h8" />
+      <path d="M8 15h5" />
+    </>
+  ),
 };
+
+const iconLabelsByHref = {
+  "/dashboard": "Dashboard",
+  "/dashboard/instruments": "Instruments",
+  "/dashboard/employees": "Employees",
+  "/dashboard/vehicles": "Vehicles",
+  "/dashboard/file-manager": "File Manager",
+  "/dashboard/site-allowance": "Site Allowance",
+  "/dashboard/site-attendance": "Site Attendance",
+  "/dashboard/site-projects": "Site Projects",
+};
+
+export function DashboardNavIcon({ item, className = "h-5 w-5" }) {
+  const iconLabel = iconLabelsByHref[item.href] || item.label;
+  const icon = iconPaths[iconLabel] || iconPaths[item.label] || iconPaths.Dashboard;
+
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8">
+      {icon}
+    </svg>
+  );
+}
 
 export function DashboardNavLink({ item, compact = false }) {
   const pathname = usePathname();
   const isActive = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
-  const icon = iconPaths[item.label] || iconPaths[item.initial] || iconPaths.Dashboard;
 
   if (compact) {
     return (
@@ -97,9 +125,7 @@ export function DashboardNavLink({ item, compact = false }) {
           isActive ? "bg-brand-50 text-brand-600" : "text-gray-500 hover:bg-brand-50 hover:text-brand-600"
         }`}
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8">
-          {icon}
-        </svg>
+        <DashboardNavIcon item={item} className="h-5 w-5 shrink-0" />
         <span className="max-w-full truncate">{item.label}</span>
       </Link>
     );
@@ -117,9 +143,7 @@ export function DashboardNavLink({ item, compact = false }) {
           isActive ? "border-brand-100 bg-white text-brand-600" : "border-gray-200 bg-white text-gray-500"
         }`}
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-          {icon}
-        </svg>
+        <DashboardNavIcon item={item} className="h-5 w-5" />
       </span>
       {item.label}
     </Link>

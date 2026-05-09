@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { DashboardNavIcon } from "@/components/layout/DashboardNavLink";
 
 export function MobileMoreNav({ items }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +33,7 @@ export function MobileMoreNav({ items }) {
     <div ref={containerRef} className="relative min-w-0">
       {isOpen ? (
         <div className="absolute bottom-full right-0 mb-2 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-md">
-          {items.map((item) => (
+          {[...items].reverse().map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -43,12 +44,7 @@ export function MobileMoreNav({ items }) {
                   : "text-gray-700 hover:bg-brand-50 hover:text-brand-600"
               }`}
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M7 4.75h10A2.25 2.25 0 0 1 19.25 7v10A2.25 2.25 0 0 1 17 19.25H7A2.25 2.25 0 0 1 4.75 17V7A2.25 2.25 0 0 1 7 4.75Z" />
-                <path d="M8.5 9h7" />
-                <path d="M8.5 12h7" />
-                <path d="M8.5 15h3" />
-              </svg>
+              <DashboardNavIcon item={item} className="h-5 w-5 shrink-0" />
               <span className="truncate">{item.label}</span>
             </Link>
           ))}

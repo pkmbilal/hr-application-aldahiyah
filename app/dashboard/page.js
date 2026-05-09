@@ -233,7 +233,7 @@ function EmployeeDashboard({ metrics }) {
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
-          <div className="border-b border-gray-200 px-5 py-4">
+          <div className="border-b border-rose-100 bg-rose-50 px-5 py-4">
             <h2 className="text-base font-semibold text-gray-900">My Expiry Watchlist</h2>
             <p className="mt-1 text-sm text-gray-500">Only your expired items and items due within 30 days.</p>
           </div>
