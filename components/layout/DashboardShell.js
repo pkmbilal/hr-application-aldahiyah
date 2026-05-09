@@ -38,17 +38,37 @@ export function DashboardShell({ children, profile, linkedEmployee }) {
       "/dashboard/employees",
       "/dashboard/site-attendance",
       "/dashboard/site-allowance",
+      "/dashboard/file-manager",
       "/dashboard/instruments",
       "/dashboard/vehicles",
     ];
     return employeeOrder.indexOf(first.href) - employeeOrder.indexOf(second.href);
   });
-  const mobileMoreItems = navItems.filter((item) =>
-    ["/dashboard/profile", "/dashboard/site-attendance", "/dashboard/site-allowance", "/dashboard/site-projects"].includes(item.href)
-  );
-  const mobilePrimaryItems = navItems
-    .filter((item) => !["/dashboard/profile", "/dashboard/site-attendance", "/dashboard/site-allowance", "/dashboard/site-projects"].includes(item.href))
-    .slice(0, 4);
+  const mobilePrimaryHrefs = ["/dashboard", "/dashboard/employees", "/dashboard/site-attendance", "/dashboard/site-allowance"];
+  const mobileMoreHrefs = ["/dashboard/file-manager", "/dashboard/instruments", "/dashboard/vehicles", "/dashboard/site-projects"];
+  const mobilePrimaryItems = mobilePrimaryHrefs
+    .map((href) => navItems.find((item) => item.href === href))
+    .filter(Boolean);
+  const compactMobilePrimaryItems = mobilePrimaryItems.map((item) => {
+    if (item.href === "/dashboard/site-attendance") {
+      return {
+        ...item,
+        label: "Attendance",
+      };
+    }
+
+    if (item.href === "/dashboard/site-allowance") {
+      return {
+        ...item,
+        label: "Allowance",
+      };
+    }
+
+    return item;
+  });
+  const mobileMoreItems = mobileMoreHrefs
+    .map((href) => navItems.find((item) => item.href === href))
+    .filter(Boolean);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
@@ -104,7 +124,7 @@ export function DashboardShell({ children, profile, linkedEmployee }) {
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 shadow-[0_-8px_24px_rgba(16,24,40,0.08)] backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
-          {mobilePrimaryItems.map((item) => (
+          {compactMobilePrimaryItems.map((item) => (
             <DashboardNavLink key={item.href} item={item} compact />
           ))}
           <MobileMoreNav items={mobileMoreItems} />
