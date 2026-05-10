@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { COMPANY_DOCUMENT_CATEGORIES } from "@/lib/company-documents";
 
-export function CompanyDocumentForm({ action, document, error }) {
+export function CompanyDocumentForm({ action, document, folders = [], defaultFolderId = "", lockFolder = false, error }) {
   return (
     <form action={action} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:space-y-6 sm:rounded-2xl sm:p-6">
       {error ? (
@@ -13,6 +13,7 @@ export function CompanyDocumentForm({ action, document, error }) {
       <section className="grid gap-4 sm:gap-5 lg:grid-cols-2">
         <Field label="Document Title" name="title" defaultValue={document?.title} required />
         <CategoryField defaultValue={document?.category} />
+        <FolderField folders={folders} defaultValue={document?.folder_id || defaultFolderId} locked={lockFolder} />
         <Textarea label="Description" name="description" defaultValue={document?.description} />
         <FileField url={document?.file_url} required={!document} />
       </section>
@@ -85,6 +86,49 @@ function CategoryField({ defaultValue }) {
         {COMPANY_DOCUMENT_CATEGORIES.map((category) => (
           <option key={category} value={category}>
             {category}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function FolderField({ folders, defaultValue, locked }) {
+  const selectedFolder = folders.find((folder) => folder.id === defaultValue);
+
+  if (locked && selectedFolder) {
+    return (
+      <div>
+        <label htmlFor="folder-name-display" className="text-sm font-medium text-slate-700">
+          Folder
+        </label>
+        <input type="hidden" name="folder_id" value={selectedFolder.id} />
+        <input
+          id="folder-name-display"
+          type="text"
+          value={selectedFolder.name}
+          disabled
+          className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-600 outline-none"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <label htmlFor="folder_id" className="text-sm font-medium text-slate-700">
+        Folder
+      </label>
+      <select
+        id="folder_id"
+        name="folder_id"
+        defaultValue={defaultValue || ""}
+        className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+      >
+        <option value="">Unfiled</option>
+        {folders.map((folder) => (
+          <option key={folder.id} value={folder.id}>
+            {folder.name}
           </option>
         ))}
       </select>

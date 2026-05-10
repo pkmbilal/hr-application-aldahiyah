@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createCompanyDocument } from "@/app/dashboard/file-manager/actions";
 import { CompanyDocumentForm } from "@/components/company-documents/CompanyDocumentForm";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { listCompanyDocumentFolders } from "@/lib/company-documents";
 
 export const metadata = {
   title: "Upload Document | HR Aldahiyah",
@@ -15,6 +16,11 @@ export default async function NewCompanyDocumentPage({ searchParams }) {
     redirect("/dashboard/file-manager");
   }
 
+  const foldersResult = await listCompanyDocumentFolders();
+  const defaultFolderId = foldersResult.folders.some((folder) => folder.id === params?.folder_id)
+    ? params.folder_id
+    : "";
+
   return (
     <div className="space-y-6">
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
@@ -25,7 +31,13 @@ export default async function NewCompanyDocumentPage({ searchParams }) {
         </p>
       </section>
 
-      <CompanyDocumentForm action={createCompanyDocument} error={params?.error} />
+      <CompanyDocumentForm
+        action={createCompanyDocument}
+        folders={foldersResult.folders}
+        defaultFolderId={defaultFolderId}
+        lockFolder={Boolean(defaultFolderId)}
+        error={params?.error}
+      />
     </div>
   );
 }

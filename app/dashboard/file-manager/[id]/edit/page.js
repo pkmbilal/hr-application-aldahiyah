@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { updateCompanyDocument } from "@/app/dashboard/file-manager/actions";
 import { CompanyDocumentForm } from "@/components/company-documents/CompanyDocumentForm";
 import { requireCurrentUserProfile } from "@/lib/auth";
-import { getCompanyDocument } from "@/lib/company-documents";
+import { getCompanyDocument, listCompanyDocumentFolders } from "@/lib/company-documents";
 
 export const metadata = {
   title: "Edit Document | HR Aldahiyah",
@@ -23,6 +23,8 @@ export default async function EditCompanyDocumentPage({ params, searchParams }) 
     notFound();
   }
 
+  const foldersResult = await listCompanyDocumentFolders();
+
   async function updateAction(formData) {
     "use server";
     await updateCompanyDocument(routeParams.id, formData);
@@ -38,7 +40,12 @@ export default async function EditCompanyDocumentPage({ params, searchParams }) 
         </p>
       </section>
 
-      <CompanyDocumentForm action={updateAction} document={document} error={queryParams?.error} />
+      <CompanyDocumentForm
+        action={updateAction}
+        document={document}
+        folders={foldersResult.folders}
+        error={queryParams?.error}
+      />
     </div>
   );
 }

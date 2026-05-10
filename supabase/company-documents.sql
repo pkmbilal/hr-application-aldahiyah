@@ -20,10 +20,25 @@ create table if not exists public.company_documents (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.company_document_folders (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.company_documents
+add column if not exists folder_id uuid references public.company_document_folders(id) on delete set null;
+
 create index if not exists company_documents_active_created_idx on public.company_documents(is_active, created_at desc);
 create index if not exists company_documents_share_token_idx on public.company_documents(share_token);
+create index if not exists company_documents_folder_created_idx on public.company_documents(folder_id, created_at desc);
+create index if not exists company_document_folders_name_idx on public.company_document_folders(name);
 
 alter table public.company_documents enable row level security;
+alter table public.company_document_folders enable row level security;
 
 create or replace function public.is_admin_user()
 returns boolean
@@ -48,6 +63,29 @@ to authenticated
 using (public.is_admin_user())
 with check (public.is_admin_user());
 
+drop policy if exists "Admins manage company document folders" on public.company_document_folders;
+create policy "Admins manage company document folders"
+on public.company_document_folders
+for all
+to authenticated
+using (public.is_admin_user())
+with check (public.is_admin_user());
+
+drop policy if exists "Employees read active company document folders" on public.company_document_folders;
+create policy "Employees read active company document folders"
+on public.company_document_folders
+for select
+to authenticated
+using (
+  public.is_admin_user()
+  or exists (
+    select 1
+    from public.company_documents
+    where company_documents.folder_id = company_document_folders.id
+      and company_documents.is_active = true
+  )
+);
+
 drop policy if exists "Employees read active company documents" on public.company_documents;
 create policy "Employees read active company documents"
 on public.company_documents
@@ -55,12 +93,15 @@ for select
 to authenticated
 using (is_active or public.is_admin_user());
 
+drop function if exists public.get_company_document_by_share_token(text);
+
 create or replace function public.get_company_document_by_share_token(p_share_token text)
 returns table (
   id uuid,
   title text,
   category text,
   description text,
+  folder_id uuid,
   storage_path text,
   file_name text,
   file_type text,
@@ -77,6 +118,7 @@ as $$
     company_documents.title,
     company_documents.category,
     company_documents.description,
+    company_documents.folder_id,
     company_documents.storage_path,
     company_documents.file_name,
     company_documents.file_type,
