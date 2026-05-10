@@ -84,6 +84,18 @@ export function DesktopUserMenu({ displayName, email, roleLabel, logoutAction })
               </svg>
               <span>My Profile</span>
             </Link>
+            <Link
+              href="/dashboard/change-password"
+              onClick={() => setIsOpen(false)}
+              className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-gray-800 transition hover:bg-brand-50 hover:text-brand-600"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-brand-500" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M8.75 11.25V8a3.25 3.25 0 0 1 6.5 0v3.25" />
+                <path d="M6.75 11.25h10.5a1.5 1.5 0 0 1 1.5 1.5v5A1.5 1.5 0 0 1 17.25 19.25H6.75a1.5 1.5 0 0 1-1.5-1.5v-5a1.5 1.5 0 0 1 1.5-1.5Z" />
+                <path d="M12 14.5v1.75" />
+              </svg>
+              <span>Change Password</span>
+            </Link>
             <form action={logoutAction}>
               <button
                 type="submit"
