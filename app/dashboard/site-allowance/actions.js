@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { createAdminSubmissionNotification } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 import {
   SITE_ALLOWANCE_DAILY_RATE,
@@ -134,6 +135,15 @@ export async function createSiteAllowance(formData) {
   }
 
   await lockAttendanceRows(supabase, payload.items, inserted.id);
+
+  await createAdminSubmissionNotification({
+    profile,
+    entityType: "site_allowance",
+    entityId: inserted.id,
+    title: "New site allowance submitted",
+    body: `${await getNotificationActorName(supabase, employeeId, profile)} submitted an allowance claim for ${payload.items.length} project ${payload.items.length === 1 ? "row" : "rows"}.`,
+    href: `/dashboard/site-allowance/${inserted.id}`,
+  });
 
   revalidatePath("/dashboard/site-allowance");
   revalidatePath("/dashboard/site-attendance");
@@ -298,4 +308,14 @@ async function unlockAllowanceAttendance(supabase, allowanceId) {
   if (error) {
     throw new Error(error.message);
   }
+}
+
+async function getNotificationActorName(supabase, employeeId, profile) {
+  const { data } = await supabase
+    .from("employees")
+    .select("name")
+    .eq("id", employeeId)
+    .maybeSingle();
+
+  return data?.name || profile.full_name || profile.email || "An employee";
 }
