@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { createAdminSubmissionNotification } from "@/lib/notifications";
 import { getLinkedEmployee } from "@/lib/site-allowance";
 import { SITE_ATTENDANCE_TYPES } from "@/lib/site-attendance";
 import { createClient } from "@/lib/supabase/server";
@@ -83,11 +84,24 @@ export async function createSiteAttendance(formData) {
   const basePath = "/dashboard/site-attendance/new";
   const supabase = await createClient();
   const payload = await buildAttendancePayload(supabase, profile, formData, basePath);
-  const { error } = await supabase.from("site_attendance").insert({ ...payload, created_by: profile.id });
+  const { data: inserted, error } = await supabase
+    .from("site_attendance")
+    .insert({ ...payload, created_by: profile.id })
+    .select("id")
+    .single();
 
   if (error) {
     redirect(`${basePath}?error=${encodeURIComponent(error.message)}`);
   }
+
+  await createAdminSubmissionNotification({
+    profile,
+    entityType: "site_attendance",
+    entityId: inserted.id,
+    title: "New site attendance submitted",
+    body: `${await getNotificationActorName(supabase, payload.employee_id, profile)} submitted ${payload.type} attendance for ${payload.project_name}.`,
+    href: `/dashboard/site-attendance/${inserted.id}/edit`,
+  });
 
   revalidatePath("/dashboard/site-attendance");
   redirect("/dashboard/site-attendance");
@@ -147,4 +161,14 @@ async function getEditableAttendance(supabase, id, profile, redirectPath) {
   }
 
   return data;
+}
+
+async function getNotificationActorName(supabase, employeeId, profile) {
+  const { data } = await supabase
+    .from("employees")
+    .select("name")
+    .eq("id", employeeId)
+    .maybeSingle();
+
+  return data?.name || profile.full_name || profile.email || "An employee";
 }

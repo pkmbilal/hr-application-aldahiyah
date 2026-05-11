@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { markAllNotificationsAsRead, markNotificationAsRead } from "@/app/dashboard/notifications/actions";
 import { dashboardNavItems } from "@/lib/navigation";
 import { logout } from "@/app/dashboard/actions";
 import { DesktopUserMenu } from "@/components/layout/DesktopUserMenu";
@@ -6,8 +7,9 @@ import { DashboardNavLink } from "@/components/layout/DashboardNavLink";
 import { MobileHeaderTitle } from "@/components/layout/MobileHeaderTitle";
 import { MobileMoreNav } from "@/components/layout/MobileMoreNav";
 import { MobileUserMenu } from "@/components/layout/MobileUserMenu";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
-export function DashboardShell({ children, profile, linkedEmployee }) {
+export function DashboardShell({ children, profile, linkedEmployee, notificationSummary }) {
   const isAdmin = profile?.role === "admin";
   const displayName = linkedEmployee?.name || profile?.full_name || profile?.email || "Office User";
   const email = profile?.email || "";
@@ -100,7 +102,7 @@ export function DashboardShell({ children, profile, linkedEmployee }) {
 
       <div className="lg:pl-[290px]">
         <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/95 shadow-theme-sm backdrop-blur">
-          <div className="flex min-h-[64px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:min-h-[76px] lg:px-8">
+          <div className="grid min-h-[64px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6 lg:min-h-[76px] lg:px-8">
             <Link href="/dashboard" className="flex min-w-0 items-center gap-3 lg:hidden">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-sm font-semibold text-white shadow-theme-sm">
                 HR
@@ -112,7 +114,15 @@ export function DashboardShell({ children, profile, linkedEmployee }) {
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Internal dashboard</p>
               <h1 className="text-lg font-semibold text-gray-900">Office Records</h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex shrink-0 items-center gap-3 sm:gap-3">
+              {isAdmin ? (
+                <NotificationBell
+                  notifications={notificationSummary?.notifications || []}
+                  unreadCount={notificationSummary?.unreadCount || 0}
+                  markAllReadAction={markAllNotificationsAsRead}
+                  markReadAction={markNotificationAsRead}
+                />
+              ) : null}
               <DesktopUserMenu displayName={displayName} email={email} roleLabel={roleLabel} logoutAction={logout} />
               <MobileUserMenu displayName={displayName} email={email} roleLabel={roleLabel} logoutAction={logout} />
             </div>

@@ -1,13 +1,17 @@
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { getAdminNotificationSummary } from "@/lib/notifications";
 import { getLinkedEmployee } from "@/lib/site-allowance";
 
 export default async function DashboardLayout({ children }) {
   const { profile } = await requireCurrentUserProfile();
-  const linkedEmployee = await getLinkedEmployee(profile.id);
+  const [linkedEmployee, notificationSummary] = await Promise.all([
+    getLinkedEmployee(profile.id),
+    getAdminNotificationSummary(profile),
+  ]);
 
   return (
-    <DashboardShell profile={profile} linkedEmployee={linkedEmployee}>
+    <DashboardShell profile={profile} linkedEmployee={linkedEmployee} notificationSummary={notificationSummary}>
       {children}
     </DashboardShell>
   );

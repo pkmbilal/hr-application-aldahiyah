@@ -31,7 +31,7 @@ export default async function LoginPage({ searchParams }) {
             </div>
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">ALDAHIYAH GROUP</p>
-              <p className="mt-1 text-sm font-medium text-gray-500">Internal HR Portal</p>
+              <p className="mt-1 text-sm font-medium text-gray-500">Internal Portal</p>
             </div>
           </div>
           <h1 className="mb-2 text-3xl font-bold text-gray-900">Welcome Back</h1>
@@ -98,7 +98,7 @@ export default async function LoginPage({ searchParams }) {
         </form>
 
         <p className="mt-8 text-center text-xs font-medium text-gray-500">
-          HR Aldahiyah · Internal use only
+          Aldahiyah · Internal use only
         </p>
       </section>
     </main>
