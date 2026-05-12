@@ -9,6 +9,7 @@ export function DeleteConfirmationButton({
   message = "Do you want to delete this record?",
   detail,
   confirmLabel = "Delete",
+  triggerClassName,
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -17,7 +18,10 @@ export function DeleteConfirmationButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex min-h-10 items-center rounded-lg border border-rose-200 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 md:min-h-0 md:rounded-md md:py-1.5 md:text-xs"
+        className={
+          triggerClassName ||
+          "inline-flex min-h-10 appearance-none items-center rounded-lg border border-rose-200 px-3 text-sm font-semibold leading-none text-rose-700 transition hover:bg-rose-50 md:min-h-0 md:rounded-md md:py-1.5 md:text-xs"
+        }
       >
         Delete
       </button>

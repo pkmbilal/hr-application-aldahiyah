@@ -74,7 +74,7 @@ const iconPaths = {
       <path d="m8.75 14 2 2 4.75-5" />
     </>
   ),
-  "Site Projects": (
+  "Projects & Orders": (
     <>
       <path d="M5.25 19.25V8.5l6.75-3.75 6.75 3.75v10.75" />
       <path d="M9 19.25v-6.5h6v6.5" />
@@ -99,7 +99,7 @@ const iconLabelsByHref = {
   "/dashboard/file-manager": "File Manager",
   "/dashboard/site-allowance": "Site Allowance",
   "/dashboard/site-attendance": "Site Attendance",
-  "/dashboard/site-projects": "Site Projects",
+  "/dashboard/site-projects": "Projects & Orders",
 };
 
 export function DashboardNavIcon({ item, className = "h-5 w-5" }) {

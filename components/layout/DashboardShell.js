@@ -41,6 +41,7 @@ export function DashboardShell({ children, profile, linkedEmployee, notification
       "/dashboard/site-attendance",
       "/dashboard/site-allowance",
       "/dashboard/file-manager",
+      "/dashboard/site-projects",
       "/dashboard/instruments",
       "/dashboard/vehicles",
     ];
