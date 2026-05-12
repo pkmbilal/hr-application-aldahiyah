@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 const sectionLabels = [
   { href: "/dashboard/profile", label: "Profile" },
-  { href: "/dashboard/site-projects", label: "Site Projects" },
+  { href: "/dashboard/site-projects", label: "Projects & Orders" },
   { href: "/dashboard/site-attendance", label: "Site Attendance" },
   { href: "/dashboard/site-allowance", label: "Site Allowance" },
   { href: "/dashboard/instruments", label: "Instruments" },

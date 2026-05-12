@@ -40,10 +40,24 @@ create table if not exists public.site_projects (
   name text not null,
   order_no text not null,
   details text,
+  project_file_path text,
+  project_file_name text,
+  project_file_type text,
+  project_file_size bigint,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.site_projects
+add column if not exists project_file_path text,
+add column if not exists project_file_name text,
+add column if not exists project_file_type text,
+add column if not exists project_file_size bigint;
+
+insert into storage.buckets (id, name, public)
+values ('site-project-documents', 'site-project-documents', false)
+on conflict (id) do update set public = false;
 
 create table if not exists public.site_attendance (
   id uuid primary key default gen_random_uuid(),
@@ -66,6 +80,7 @@ create index if not exists site_allowances_employee_id_idx on public.site_allowa
 create index if not exists site_allowances_claim_month_idx on public.site_allowances(claim_month desc);
 create index if not exists site_allowance_items_allowance_id_idx on public.site_allowance_items(allowance_id);
 create index if not exists site_projects_is_active_idx on public.site_projects(is_active);
+create index if not exists site_projects_project_file_path_idx on public.site_projects(project_file_path);
 create index if not exists site_attendance_employee_date_idx on public.site_attendance(employee_id, attendance_date desc);
 create index if not exists site_attendance_allowance_id_idx on public.site_attendance(allowance_id);
 create index if not exists site_attendance_type_idx on public.site_attendance(type);
@@ -236,6 +251,29 @@ on public.site_projects
 for select
 to authenticated
 using (is_active or public.is_admin_user());
+
+drop policy if exists "Admins manage site project files" on storage.objects;
+create policy "Admins manage site project files"
+on storage.objects
+for all
+to authenticated
+using (bucket_id = 'site-project-documents' and public.is_admin_user())
+with check (bucket_id = 'site-project-documents' and public.is_admin_user());
+
+drop policy if exists "Active site project files are viewable by authenticated users" on storage.objects;
+create policy "Active site project files are viewable by authenticated users"
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'site-project-documents'
+  and exists (
+    select 1
+    from public.site_projects
+    where site_projects.project_file_path = storage.objects.name
+      and (site_projects.is_active = true or public.is_admin_user())
+  )
+);
 
 drop policy if exists "Admins manage site attendance" on public.site_attendance;
 create policy "Admins manage site attendance"

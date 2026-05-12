@@ -11,7 +11,29 @@ export function SiteProjectForm({ action, project, error }) {
 
       <section className="grid gap-5 lg:grid-cols-2">
         <Field label="Company / Project Name" name="name" defaultValue={project?.name} required />
-        <Field label="Order Number" name="order_no" defaultValue={project?.order_no} required />
+        <Field label="Purchase Order Number" name="order_no" defaultValue={project?.order_no} required />
+        <div className="lg:col-span-2">
+          <label htmlFor="project_file" className="text-sm font-medium text-slate-700">
+            Project Document
+          </label>
+          <input
+            id="project_file"
+            name="project_file"
+            type="file"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
+            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-slate-700 sm:py-2.5"
+          />
+          {project?.view_path ? (
+            <a
+              href={project.view_path}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-sm font-semibold text-slate-950 underline underline-offset-4"
+            >
+              Open current document
+            </a>
+          ) : null}
+        </div>
         <div className="lg:col-span-2">
           <label htmlFor="details" className="text-sm font-medium text-slate-700">
             Details
@@ -29,6 +51,8 @@ export function SiteProjectForm({ action, project, error }) {
           Active for employee attendance
         </label>
       </section>
+
+      {project?.project_file_path ? <input type="hidden" name="project_file_path" value={project.project_file_path} /> : null}
 
       <div className="grid gap-3 border-t border-slate-100 pt-5 sm:flex sm:items-center sm:justify-end">
         <Link

@@ -5,7 +5,7 @@ import { requireCurrentUserProfile } from "@/lib/auth";
 import { getSiteProject } from "@/lib/site-projects";
 
 export const metadata = {
-  title: "Edit Site Project | HR Aldahiyah",
+  title: "Edit Project & Order | HR Aldahiyah",
 };
 
 export default async function EditSiteProjectPage({ params, searchParams }) {
@@ -28,8 +28,8 @@ export default async function EditSiteProjectPage({ params, searchParams }) {
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Site Projects</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-950">Edit Site Project</h1>
+        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Projects & Orders</p>
+        <h1 className="mt-2 text-2xl font-semibold text-slate-950">Edit Project & Order</h1>
       </section>
       <SiteProjectForm action={action} project={project} error={queryParams?.error} />
     </div>
