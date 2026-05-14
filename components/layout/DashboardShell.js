@@ -116,14 +116,12 @@ export function DashboardShell({ children, profile, linkedEmployee, notification
               <h1 className="text-lg font-semibold text-gray-900">Office Records</h1>
             </div>
             <div className="flex shrink-0 items-center gap-3 sm:gap-3">
-              {isAdmin ? (
-                <NotificationBell
-                  notifications={notificationSummary?.notifications || []}
-                  unreadCount={notificationSummary?.unreadCount || 0}
-                  markAllReadAction={markAllNotificationsAsRead}
-                  markReadAction={markNotificationAsRead}
-                />
-              ) : null}
+              <NotificationBell
+                notifications={notificationSummary?.notifications || []}
+                unreadCount={notificationSummary?.unreadCount || 0}
+                markAllReadAction={markAllNotificationsAsRead}
+                markReadAction={markNotificationAsRead}
+              />
               <DesktopUserMenu displayName={displayName} email={email} roleLabel={roleLabel} logoutAction={logout} />
               <MobileUserMenu displayName={displayName} email={email} roleLabel={roleLabel} logoutAction={logout} />
             </div>

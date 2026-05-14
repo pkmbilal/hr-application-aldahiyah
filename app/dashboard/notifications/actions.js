@@ -5,12 +5,7 @@ import { requireCurrentUserProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export async function markNotificationAsRead(formData) {
-  const { profile } = await requireCurrentUserProfile();
-
-  if (profile?.role !== "admin") {
-    return;
-  }
-
+  await requireCurrentUserProfile();
   const id = String(formData.get("id") || "");
 
   if (!id) {
@@ -28,11 +23,7 @@ export async function markNotificationAsRead(formData) {
 }
 
 export async function markAllNotificationsAsRead() {
-  const { profile } = await requireCurrentUserProfile();
-
-  if (profile?.role !== "admin") {
-    return;
-  }
+  await requireCurrentUserProfile();
 
   const now = new Date().toISOString();
   const supabase = await createClient();

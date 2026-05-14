@@ -113,7 +113,7 @@ export function NotificationBell({ notifications, unreadCount, markAllReadAction
             ) : (
               <div className="px-4 py-10 text-center">
                 <p className="text-sm font-semibold text-gray-900">No notifications</p>
-                <p className="mt-1 text-xs text-gray-500">Employee submissions will appear here.</p>
+                <p className="mt-1 text-xs text-gray-500">Important dashboard updates will appear here.</p>
               </div>
             )}
           </div>
