@@ -3,7 +3,7 @@ create table if not exists public.notifications (
   recipient_admin_id uuid not null references auth.users(id) on delete cascade,
   actor_user_id uuid references auth.users(id) on delete set null,
   event_type text not null check (event_type in ('created')),
-  entity_type text not null check (entity_type in ('site_attendance', 'site_allowance')),
+  entity_type text not null check (entity_type in ('site_attendance', 'site_allowance', 'vehicle_fine')),
   entity_id uuid not null,
   title text not null,
   body text,
@@ -33,8 +33,7 @@ on public.notifications
 for select
 to authenticated
 using (
-  (select public.is_admin_user())
-  and recipient_admin_id = (select auth.uid())
+  recipient_admin_id = (select auth.uid())
 );
 
 drop policy if exists "Admins update own notifications" on public.notifications;
@@ -43,12 +42,20 @@ on public.notifications
 for update
 to authenticated
 using (
-  (select public.is_admin_user())
-  and recipient_admin_id = (select auth.uid())
+  recipient_admin_id = (select auth.uid())
 )
 with check (
+  recipient_admin_id = (select auth.uid())
+);
+
+drop policy if exists "Admins create notifications" on public.notifications;
+create policy "Admins create notifications"
+on public.notifications
+for insert
+to authenticated
+with check (
   (select public.is_admin_user())
-  and recipient_admin_id = (select auth.uid())
+  and actor_user_id = (select auth.uid())
 );
 
 create or replace function public.create_admin_notification(
