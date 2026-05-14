@@ -59,6 +59,10 @@ insert into storage.buckets (id, name, public)
 values ('site-project-documents', 'site-project-documents', false)
 on conflict (id) do update set public = false;
 
+insert into storage.buckets (id, name, public)
+values ('site-attendance-documents', 'site-attendance-documents', false)
+on conflict (id) do update set public = false;
+
 create table if not exists public.site_attendance (
   id uuid primary key default gen_random_uuid(),
   employee_id uuid not null references public.employees(id) on delete cascade,
@@ -70,11 +74,21 @@ create table if not exists public.site_attendance (
   exit_time time not null,
   type text not null check (type in ('Safety', 'Idle', 'Job')),
   notes text,
+  attendance_file_path text,
+  attendance_file_name text,
+  attendance_file_type text,
+  attendance_file_size bigint,
   allowance_id uuid references public.site_allowances(id) on delete set null,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.site_attendance
+add column if not exists attendance_file_path text,
+add column if not exists attendance_file_name text,
+add column if not exists attendance_file_type text,
+add column if not exists attendance_file_size bigint;
 
 create index if not exists site_allowances_employee_id_idx on public.site_allowances(employee_id);
 create index if not exists site_allowances_claim_month_idx on public.site_allowances(claim_month desc);
@@ -84,6 +98,7 @@ create index if not exists site_projects_project_file_path_idx on public.site_pr
 create index if not exists site_attendance_employee_date_idx on public.site_attendance(employee_id, attendance_date desc);
 create index if not exists site_attendance_allowance_id_idx on public.site_attendance(allowance_id);
 create index if not exists site_attendance_type_idx on public.site_attendance(type);
+create index if not exists site_attendance_file_path_idx on public.site_attendance(attendance_file_path);
 
 alter table public.site_allowances enable row level security;
 alter table public.site_allowance_items enable row level security;
@@ -315,6 +330,84 @@ on public.site_attendance
 for delete
 to authenticated
 using (public.is_own_employee(employee_id) and allowance_id is null);
+
+drop policy if exists "Admins manage site attendance files" on storage.objects;
+create policy "Admins manage site attendance files"
+on storage.objects
+for all
+to authenticated
+using (bucket_id = 'site-attendance-documents' and public.is_admin_user())
+with check (bucket_id = 'site-attendance-documents' and public.is_admin_user());
+
+drop policy if exists "Employees create own site attendance files" on storage.objects;
+create policy "Employees create own site attendance files"
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'site-attendance-documents'
+  and exists (
+    select 1
+    from public.employees
+    where employees.id::text = split_part(storage.objects.name, '/', 1)
+      and employees.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "Employees update own site attendance files" on storage.objects;
+create policy "Employees update own site attendance files"
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'site-attendance-documents'
+  and exists (
+    select 1
+    from public.employees
+    where employees.id::text = split_part(storage.objects.name, '/', 1)
+      and employees.user_id = auth.uid()
+  )
+)
+with check (
+  bucket_id = 'site-attendance-documents'
+  and exists (
+    select 1
+    from public.employees
+    where employees.id::text = split_part(storage.objects.name, '/', 1)
+      and employees.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "Employees delete own site attendance files" on storage.objects;
+create policy "Employees delete own site attendance files"
+on storage.objects
+for delete
+to authenticated
+using (
+  bucket_id = 'site-attendance-documents'
+  and exists (
+    select 1
+    from public.employees
+    where employees.id::text = split_part(storage.objects.name, '/', 1)
+      and employees.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "Site attendance files are viewable by owner and admins" on storage.objects;
+create policy "Site attendance files are viewable by owner and admins"
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'site-attendance-documents'
+  and exists (
+    select 1
+    from public.site_attendance
+    join public.employees on employees.id = site_attendance.employee_id
+    where site_attendance.attendance_file_path = storage.objects.name
+      and (public.is_admin_user() or employees.user_id = auth.uid())
+  )
+);
 
 create or replace function public.lock_site_allowance_attendance(
   p_allowance_id uuid,

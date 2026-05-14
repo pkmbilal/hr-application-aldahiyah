@@ -66,8 +66,20 @@ export default async function SiteAttendancePage({ searchParams }) {
           {!attendanceRows.length ? <div className="px-5 py-12 text-center text-sm text-slate-500">No attendance added yet.</div> : null}
         </div>
 
-        <div className="hidden overflow-x-auto lg:block">
-          <table className="min-w-full divide-y divide-slate-200">
+        <div className="hidden lg:block">
+          <table className="w-full table-fixed divide-y divide-slate-200">
+            <colgroup>
+              {isAdmin ? <col className="w-[12%]" /> : null}
+              <col className={isAdmin ? "w-[9%]" : "w-[10%]"} />
+              <col className={isAdmin ? "w-[13%]" : "w-[17%]"} />
+              <col className={isAdmin ? "w-[8%]" : "w-[9%]"} />
+              <col className={isAdmin ? "w-[9%]" : "w-[10%]"} />
+              <col className={isAdmin ? "w-[7%]" : "w-[8%]"} />
+              <col className={isAdmin ? "w-[13%]" : "w-[18%]"} />
+              <col className={isAdmin ? "w-[9%]" : "w-[9%]"} />
+              <col className={isAdmin ? "w-[7%]" : "w-[7%]"} />
+              <col className={isAdmin ? "w-[13%]" : "w-[12%]"} />
+            </colgroup>
             <thead className="bg-slate-50">
               <tr>
                 {isAdmin ? <Header>Employee</Header> : null}
@@ -77,6 +89,7 @@ export default async function SiteAttendancePage({ searchParams }) {
                 <Header>Time</Header>
                 <Header>Type</Header>
                 <Header>Notes</Header>
+                <Header>Attachment</Header>
                 <Header>Status</Header>
                 <Header>Actions</Header>
               </tr>
@@ -94,7 +107,20 @@ export default async function SiteAttendancePage({ searchParams }) {
                   <Cell>
                     <TypeBadge type={row.type} />
                   </Cell>
-                  <Cell>{row.notes || "Not set"}</Cell>
+                  <Cell>
+                    <span className="block max-w-full truncate" title={row.notes || "Not set"}>
+                      {row.notes || "Not set"}
+                    </span>
+                  </Cell>
+                  <Cell>
+                    {row.file_view_path ? (
+                      <a href={row.file_view_path} target="_blank" rel="noreferrer" className="font-semibold text-slate-950 underline underline-offset-4">
+                        Open
+                      </a>
+                    ) : (
+                      "Not set"
+                    )}
+                  </Cell>
                   <Cell>{row.allowance_id ? "Submitted" : "Open"}</Cell>
                   <Cell>
                     <Actions row={row} isAdmin={isAdmin} compact />
@@ -103,7 +129,7 @@ export default async function SiteAttendancePage({ searchParams }) {
               ))}
               {!attendanceRows.length ? (
                 <tr>
-                  <td colSpan={isAdmin ? 9 : 8} className="px-5 py-12 text-center text-sm text-slate-500">
+                  <td colSpan={isAdmin ? 10 : 9} className="px-5 py-12 text-center text-sm text-slate-500">
                     No attendance added yet.
                   </td>
                 </tr>
@@ -119,15 +145,23 @@ export default async function SiteAttendancePage({ searchParams }) {
 function Actions({ row, isAdmin, compact = false }) {
   const canEdit = isAdmin || !row.allowance_id;
   const className = compact
-    ? "rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+    ? "inline-flex items-center rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold leading-none text-slate-700 transition hover:bg-slate-50"
     : "inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50";
+  const deleteClassName = compact
+    ? "inline-flex items-center rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold leading-none text-rose-700 transition hover:bg-rose-50"
+    : undefined;
 
   if (!canEdit) {
     return <span className="text-sm font-semibold text-slate-400">Locked</span>;
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={`flex items-center gap-2 ${compact ? "flex-nowrap whitespace-nowrap" : "flex-wrap"}`}>
+      {!compact && row.file_view_path ? (
+        <a href={row.file_view_path} target="_blank" rel="noreferrer" className={className}>
+          Attachment
+        </a>
+      ) : null}
       <Link href={`/dashboard/site-attendance/${row.id}/edit`} className={className}>
         Edit
       </Link>
@@ -137,6 +171,7 @@ function Actions({ row, isAdmin, compact = false }) {
         message="Do you want to delete this attendance record?"
         detail={`${row.project_name} on ${formatDate(row.attendance_date)} will be removed.`}
         confirmLabel="Delete Attendance"
+        triggerClassName={deleteClassName}
         fields={[{ name: "id", value: row.id }]}
       />
     </div>
@@ -145,7 +180,7 @@ function Actions({ row, isAdmin, compact = false }) {
 
 function Header({ children }) {
   return (
-    <th className="whitespace-nowrap px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
       {children}
     </th>
   );
@@ -153,7 +188,7 @@ function Header({ children }) {
 
 function Cell({ children, strong = false }) {
   return (
-    <td className={`whitespace-nowrap px-5 py-4 text-sm ${strong ? "font-semibold text-slate-950" : "text-slate-600"}`}>
+    <td className={`px-3 py-4 text-sm ${strong ? "font-semibold text-slate-950" : "text-slate-600"}`}>
       {children}
     </td>
   );

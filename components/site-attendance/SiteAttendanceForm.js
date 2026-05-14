@@ -117,6 +117,29 @@ export function SiteAttendanceForm({ action, attendance, projects = [], employee
             className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
           />
         </div>
+
+        <div className="lg:col-span-3">
+          <label htmlFor="attendance_file" className="text-sm font-medium text-slate-700">
+            Attendance Attachment
+          </label>
+          <input
+            id="attendance_file"
+            name="attendance_file"
+            type="file"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
+            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-slate-700 sm:py-2.5"
+          />
+          {attendance?.file_view_path ? (
+            <a
+              href={attendance.file_view_path}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-sm font-semibold text-slate-950 underline underline-offset-4"
+            >
+              Open current attachment
+            </a>
+          ) : null}
+        </div>
       </section>
 
       <div className="grid gap-3 border-t border-slate-100 pt-5 sm:flex sm:items-center sm:justify-end">
