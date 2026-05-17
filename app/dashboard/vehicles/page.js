@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { deleteVehicleAccident } from "@/app/dashboard/vehicles/accidents/actions";
 import { deleteVehicleFine } from "@/app/dashboard/vehicles/fines/actions";
 import { deleteVehicle } from "@/app/dashboard/vehicles/actions";
 import { DeleteConfirmationButton } from "@/components/dashboard/DeleteConfirmationButton";
 import { ExpiryBadge } from "@/components/dashboard/ExpiryBadge";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { listVehicleAccidents } from "@/lib/vehicle-accidents";
 import { listVehicleFines } from "@/lib/vehicle-fines";
 import { listVehicles } from "@/lib/vehicles";
 
@@ -39,8 +41,9 @@ export default async function VehiclesPage({ searchParams }) {
   const { profile } = await requireCurrentUserProfile();
   const isAdmin = profile?.role === "admin";
   const params = await searchParams;
-  const [vehicles, fines] = await Promise.all([listVehicles(), listVehicleFines()]);
+  const [vehicles, fines, accidents] = await Promise.all([listVehicles(), listVehicleFines(), listVehicleAccidents()]);
   const fineTotal = fines.reduce((total, fine) => total + Number(fine.amount || 0), 0);
+  const accidentCostTotal = accidents.reduce((total, accident) => total + Number(accident.estimated_cost || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -55,6 +58,12 @@ export default async function VehiclesPage({ searchParams }) {
           </div>
           {isAdmin ? (
             <div className="grid gap-2 sm:flex sm:items-center">
+              <Link
+                href="/dashboard/vehicles/accidents/new"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-theme-sm transition hover:bg-slate-50 sm:min-h-0"
+              >
+                Add Accident
+              </Link>
               <Link
                 href="/dashboard/vehicles/fines/new"
                 className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-theme-sm transition hover:bg-slate-50 sm:min-h-0"
@@ -218,6 +227,117 @@ export default async function VehiclesPage({ searchParams }) {
           <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                {isAdmin ? "Accident History" : "My Accidents"}
+              </p>
+              <h2 className="mt-2 text-xl font-semibold text-slate-950">Vehicle Accidents</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                {isAdmin
+                  ? "Track accident details by vehicle, employee, severity, repair status, and attachment."
+                  : "Review accident records assigned to your employee record."}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:flex">
+              <FineMetric label="Records" value={accidents.length} />
+              <FineMetric label="Est. Cost" value={formatAmount(accidentCostTotal)} />
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
+          <div className="divide-y divide-slate-100 lg:hidden">
+            {accidents.map((accident) => (
+              <article key={accident.id} className="space-y-4 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-semibold text-slate-950">
+                      {accident.vehicles?.vehicle_name || "Vehicle missing"}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {accident.vehicles?.vehicle_number || "No vehicle number"} · {formatDate(accident.accident_date)}
+                    </p>
+                  </div>
+                  <AccidentBadge severity={accident.severity} />
+                </div>
+                <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-3">
+                  {isAdmin ? <MiniItem label="Employee" value={accident.employees?.name || "Not linked"} /> : null}
+                  <MiniItem label="Location" value={accident.location} />
+                  <MiniItem label="Repair" value={accident.repair_status} />
+                  <MiniItem label="Cost" value={accident.estimated_cost ? formatAmount(accident.estimated_cost) : "Not set"} />
+                </div>
+                <p className="text-sm leading-6 text-slate-600">{accident.description}</p>
+                {accident.damage_details ? <p className="text-sm leading-6 text-slate-600">{accident.damage_details}</p> : null}
+                <AccidentActions accident={accident} isAdmin={isAdmin} />
+              </article>
+            ))}
+            {!accidents.length ? <div className="px-5 py-12 text-center text-sm text-slate-500">No accidents added yet.</div> : null}
+          </div>
+
+          <div className="hidden overflow-x-auto lg:block">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <Header>Date</Header>
+                  <Header>Vehicle</Header>
+                  {isAdmin ? <Header>Employee</Header> : null}
+                  <Header>Severity</Header>
+                  <Header>Location</Header>
+                  <Header>Repair</Header>
+                  <Header>Est. Cost</Header>
+                  <Header>Attachment</Header>
+                  {isAdmin ? <Header>Actions</Header> : null}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {accidents.map((accident) => (
+                  <tr key={accident.id}>
+                    <Cell>{formatDate(accident.accident_date)}</Cell>
+                    <Cell strong>
+                      {accident.vehicles?.vehicle_name || "Vehicle missing"}
+                      <span className="block text-xs font-medium text-slate-500">
+                        {accident.vehicles?.vehicle_number || "No vehicle number"}
+                      </span>
+                    </Cell>
+                    {isAdmin ? <Cell>{accident.employees?.name || "Not linked"}</Cell> : null}
+                    <Cell>
+                      <AccidentBadge severity={accident.severity} />
+                    </Cell>
+                    <Cell>{accident.location}</Cell>
+                    <Cell>{accident.repair_status}</Cell>
+                    <Cell>{accident.estimated_cost ? formatAmount(accident.estimated_cost) : "Not set"}</Cell>
+                    <Cell>
+                      {accident.attachment_url ? (
+                        <a href={accident.attachment_url} target="_blank" rel="noreferrer" className="font-semibold text-slate-950 underline underline-offset-4">
+                          Open
+                        </a>
+                      ) : (
+                        "Not set"
+                      )}
+                    </Cell>
+                    {isAdmin ? (
+                      <Cell>
+                        <AccidentActions accident={accident} isAdmin={isAdmin} compact />
+                      </Cell>
+                    ) : null}
+                  </tr>
+                ))}
+                {!accidents.length ? (
+                  <tr>
+                    <td colSpan={isAdmin ? 9 : 7} className="px-5 py-12 text-center text-sm text-slate-500">
+                      No accidents added yet.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-6">
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 {isAdmin ? "Fine History" : "My Fines"}
               </p>
               <h2 className="mt-2 text-xl font-semibold text-slate-950">Vehicle Fines</h2>
@@ -354,6 +474,55 @@ function FineMetric({ label, value }) {
     <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 text-sm font-semibold text-slate-950">{value}</p>
+    </div>
+  );
+}
+
+function AccidentBadge({ severity }) {
+  const tones = {
+    Minor: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    Moderate: "bg-amber-50 text-amber-700 ring-amber-100",
+    Major: "bg-rose-50 text-rose-700 ring-rose-100",
+  };
+
+  return (
+    <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ${tones[severity] || tones.Minor}`}>
+      {severity || "Minor"}
+    </span>
+  );
+}
+
+function AccidentActions({ accident, isAdmin, compact = false }) {
+  const className = compact
+    ? "inline-flex items-center rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold leading-none text-slate-700 transition hover:bg-slate-50"
+    : "inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50";
+  const deleteClassName = compact
+    ? "inline-flex items-center rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold leading-none text-rose-700 transition hover:bg-rose-50"
+    : undefined;
+
+  return (
+    <div className={`flex items-center gap-2 ${compact ? "flex-nowrap whitespace-nowrap" : "flex-wrap"}`}>
+      {!compact && accident.attachment_url ? (
+        <a href={accident.attachment_url} target="_blank" rel="noreferrer" className={className}>
+          Attachment
+        </a>
+      ) : null}
+      {isAdmin ? (
+        <>
+          <Link href={`/dashboard/vehicles/accidents/${accident.id}/edit`} className={className}>
+            Edit
+          </Link>
+          <DeleteConfirmationButton
+            action={deleteVehicleAccident}
+            title="Delete Accident"
+            message="Do you want to delete this accident record?"
+            detail={`${accident.vehicles?.vehicle_name || "Vehicle"} accident on ${formatDate(accident.accident_date)} will be removed.`}
+            confirmLabel="Delete Accident"
+            triggerClassName={deleteClassName}
+            fields={[{ name: "id", value: accident.id }]}
+          />
+        </>
+      ) : null}
     </div>
   );
 }
