@@ -1,18 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
-export function PasswordInput({ label, name, autoComplete, minLength, value, disabled, onChange }) {
+export function PasswordInput({
+  label,
+  name,
+  autoComplete,
+  minLength,
+  value,
+  disabled,
+  onChange,
+  placeholder,
+  inputClassName,
+  labelClassName,
+  wrapperClassName,
+}) {
   const [isVisible, setIsVisible] = useState(false);
+  const generatedId = useId();
+  const inputId = name || generatedId;
 
   return (
     <div>
-      <label htmlFor={name} className="text-sm font-medium text-slate-700">
+      <label htmlFor={inputId} className={labelClassName || "text-sm font-medium text-slate-700"}>
         {label}
       </label>
-      <div className="relative mt-2">
+      <div className={wrapperClassName || "relative mt-2"}>
         <input
-          id={name}
+          id={inputId}
           name={name}
           type={isVisible ? "text" : "password"}
           autoComplete={autoComplete}
@@ -21,7 +35,11 @@ export function PasswordInput({ label, name, autoComplete, minLength, value, dis
           value={value}
           disabled={disabled}
           onChange={onChange}
-          className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-11 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:bg-slate-50 disabled:text-slate-500"
+          placeholder={placeholder}
+          className={
+            inputClassName ||
+            "min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-11 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:bg-slate-50 disabled:text-slate-500"
+          }
         />
         <button
           type="button"

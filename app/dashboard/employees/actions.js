@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
 import { EMPLOYEE_BUCKET, getEmployeeFilePath } from "@/lib/employees";
+import { deletePrivateFile, deletePrivateFilesByPrefix, uploadPrivateFile } from "@/lib/storage/r2";
 import { createClient } from "@/lib/supabase/server";
 
 function requireAdmin(profile) {
@@ -50,21 +51,17 @@ function normalizeOtherIds(formData) {
     .filter((item) => item.issuing_authority || item.id_number || item.expiry_date || item.file?.size > 0);
 }
 
-async function uploadEmployeeFile(supabase, employeeId, label, file) {
+async function uploadEmployeeFile(employeeId, label, file) {
   const path = getEmployeeFilePath(employeeId, label, file);
 
   if (!path) {
     return null;
   }
 
-  const { error } = await supabase.storage.from(EMPLOYEE_BUCKET).upload(path, file, {
+  await uploadPrivateFile(EMPLOYEE_BUCKET, path, file, {
     cacheControl: "3600",
     upsert: false,
   });
-
-  if (error) {
-    throw new Error(error.message);
-  }
 
   return path;
 }
@@ -108,6 +105,7 @@ export async function updateEmployee(id, formData) {
   }
 
   const supabase = await createClient();
+  const existing = await getExistingEmployeeFiles(supabase, id);
   const { error } = await supabase.from("employees").update(payload).eq("id", id);
 
   if (error) {
@@ -115,9 +113,10 @@ export async function updateEmployee(id, formData) {
   }
 
   try {
-    await saveEmployeeFiles(supabase, id, formData);
+    const replacedPaths = await saveEmployeeFiles(supabase, id, formData, existing);
     await supabase.from("employee_other_ids").delete().eq("employee_id", id);
     await saveOtherIds(supabase, id, normalizeOtherIds(formData));
+    await deleteReplacedEmployeeFiles(replacedPaths, existing.otherIdPaths);
   } catch (uploadError) {
     redirect(`/dashboard/employees/${id}/edit?error=${encodeURIComponent(uploadError.message)}`);
   }
@@ -138,16 +137,13 @@ export async function deleteEmployee(formData) {
     redirect(`/dashboard/employees?error=${encodeURIComponent(error.message)}`);
   }
 
-  const { data: files } = await supabase.storage.from(EMPLOYEE_BUCKET).list(id);
-  if (files?.length) {
-    await supabase.storage.from(EMPLOYEE_BUCKET).remove(files.map((file) => `${id}/${file.name}`));
-  }
+  await deletePrivateFilesByPrefix(EMPLOYEE_BUCKET, id);
 
   revalidatePath("/dashboard/employees");
   redirect("/dashboard/employees");
 }
 
-async function saveEmployeeFiles(supabase, employeeId, formData) {
+async function saveEmployeeFiles(supabase, employeeId, formData, existing = {}) {
   const fileFields = [
     ["passport_copy", "passport_copy_path"],
     ["iqama_copy", "iqama_copy_path"],
@@ -155,12 +151,19 @@ async function saveEmployeeFiles(supabase, employeeId, formData) {
   ];
 
   const updates = {};
+  const uploadedPaths = [];
+  const replacedPaths = [];
 
   for (const [inputName, columnName] of fileFields) {
-    const path = await uploadEmployeeFile(supabase, employeeId, inputName, formData.get(inputName));
+    const path = await uploadEmployeeFile(employeeId, inputName, formData.get(inputName));
 
     if (path) {
       updates[columnName] = path;
+      uploadedPaths.push(path);
+
+      if (existing[columnName] && existing[columnName] !== path) {
+        replacedPaths.push(existing[columnName]);
+      }
     }
   }
 
@@ -168,9 +171,12 @@ async function saveEmployeeFiles(supabase, employeeId, formData) {
     const { error } = await supabase.from("employees").update(updates).eq("id", employeeId);
 
     if (error) {
+      await Promise.all(uploadedPaths.map((path) => deletePrivateFile(EMPLOYEE_BUCKET, path)));
       throw new Error(error.message);
     }
   }
+
+  return replacedPaths;
 }
 
 async function saveOtherIds(supabase, employeeId, otherIds) {
@@ -186,7 +192,7 @@ async function saveOtherIds(supabase, employeeId, otherIds) {
       issuing_authority: item.issuing_authority || "Other",
       id_number: item.id_number || "Not set",
       expiry_date: item.expiry_date,
-      file_path: await uploadEmployeeFile(supabase, employeeId, `other-id-${index}`, item.file),
+      file_path: await uploadEmployeeFile(employeeId, `other-id-${index}`, item.file),
     });
   }
 
@@ -195,4 +201,28 @@ async function saveOtherIds(supabase, employeeId, otherIds) {
   if (error) {
     throw new Error(error.message);
   }
+}
+
+async function getExistingEmployeeFiles(supabase, employeeId) {
+  const { data, error } = await supabase
+    .from("employees")
+    .select("passport_copy_path, iqama_copy_path, license_upload_path, employee_other_ids(file_path)")
+    .eq("id", employeeId)
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(error?.message || "Employee not found.");
+  }
+
+  return {
+    passport_copy_path: data.passport_copy_path,
+    iqama_copy_path: data.iqama_copy_path,
+    license_upload_path: data.license_upload_path,
+    otherIdPaths: (data.employee_other_ids || []).map((item) => item.file_path).filter(Boolean),
+  };
+}
+
+async function deleteReplacedEmployeeFiles(replacedDocumentPaths, replacedOtherIdPaths) {
+  const paths = [...new Set([...(replacedDocumentPaths || []), ...(replacedOtherIdPaths || [])].filter(Boolean))];
+  await Promise.all(paths.map((path) => deletePrivateFile(EMPLOYEE_BUCKET, path)));
 }

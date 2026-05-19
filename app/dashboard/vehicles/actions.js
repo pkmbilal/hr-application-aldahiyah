@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { deletePrivateFile, deletePrivateFilesByPrefix, uploadPrivateFile } from "@/lib/storage/r2";
 import { createClient } from "@/lib/supabase/server";
 import { VEHICLE_BUCKET, getVehicleFilePath } from "@/lib/vehicles";
 
@@ -34,21 +35,17 @@ function normalizeVehicleForm(formData) {
   };
 }
 
-async function uploadVehicleFile(supabase, vehicleId, label, file) {
+async function uploadVehicleFile(vehicleId, label, file) {
   const path = getVehicleFilePath(vehicleId, label, file);
 
   if (!path) {
     return null;
   }
 
-  const { error } = await supabase.storage.from(VEHICLE_BUCKET).upload(path, file, {
+  await uploadPrivateFile(VEHICLE_BUCKET, path, file, {
     cacheControl: "3600",
     upsert: false,
   });
-
-  if (error) {
-    throw new Error(error.message);
-  }
 
   return path;
 }
@@ -91,6 +88,16 @@ export async function updateVehicle(id, formData) {
   }
 
   const supabase = await createClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("vehicles")
+    .select("istamara_file_path, insurance_upload_path")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existingError || !existing) {
+    redirect(`/dashboard/vehicles/${id}/edit?error=${encodeURIComponent(existingError?.message || "Vehicle not found.")}`);
+  }
+
   const { error } = await supabase.from("vehicles").update(payload).eq("id", id);
 
   if (error) {
@@ -98,7 +105,7 @@ export async function updateVehicle(id, formData) {
   }
 
   try {
-    await saveVehicleFiles(supabase, id, formData);
+    await saveVehicleFiles(supabase, id, formData, existing);
   } catch (uploadError) {
     redirect(`/dashboard/vehicles/${id}/edit?error=${encodeURIComponent(uploadError.message)}`);
   }
@@ -119,19 +126,16 @@ export async function deleteVehicle(formData) {
     redirect(`/dashboard/vehicles?error=${encodeURIComponent(error.message)}`);
   }
 
-  const { data: files } = await supabase.storage.from(VEHICLE_BUCKET).list(id);
-  if (files?.length) {
-    await supabase.storage.from(VEHICLE_BUCKET).remove(files.map((file) => `${id}/${file.name}`));
-  }
+  await deletePrivateFilesByPrefix(VEHICLE_BUCKET, id);
 
   revalidatePath("/dashboard/vehicles");
   redirect("/dashboard/vehicles");
 }
 
-async function saveVehicleFiles(supabase, vehicleId, formData) {
+async function saveVehicleFiles(supabase, vehicleId, formData, existing = {}) {
   const updates = {};
-  const istamaraPath = await uploadVehicleFile(supabase, vehicleId, "istamara", formData.get("istamara_file"));
-  const insurancePath = await uploadVehicleFile(supabase, vehicleId, "insurance", formData.get("insurance_upload"));
+  const istamaraPath = await uploadVehicleFile(vehicleId, "istamara", formData.get("istamara_file"));
+  const insurancePath = await uploadVehicleFile(vehicleId, "insurance", formData.get("insurance_upload"));
 
   if (istamaraPath) {
     updates.istamara_file_path = istamaraPath;
@@ -145,7 +149,19 @@ async function saveVehicleFiles(supabase, vehicleId, formData) {
     const { error } = await supabase.from("vehicles").update(updates).eq("id", vehicleId);
 
     if (error) {
+      await Promise.all(Object.values(updates).map((path) => deletePrivateFile(VEHICLE_BUCKET, path)));
       throw new Error(error.message);
     }
+
+    const replacedPaths = [
+      istamaraPath && existing.istamara_file_path && existing.istamara_file_path !== istamaraPath
+        ? existing.istamara_file_path
+        : null,
+      insurancePath && existing.insurance_upload_path && existing.insurance_upload_path !== insurancePath
+        ? existing.insurance_upload_path
+        : null,
+    ].filter(Boolean);
+
+    await Promise.all(replacedPaths.map((path) => deletePrivateFile(VEHICLE_BUCKET, path)));
   }
 }
