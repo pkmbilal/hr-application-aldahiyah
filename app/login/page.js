@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { login } from "@/app/login/actions";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -73,20 +74,15 @@ export default async function LoginPage({ searchParams }) {
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Password"
-              required
-              className="block min-h-12 w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-theme-sm outline-none transition placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
-            />
-          </div>
+          <PasswordInput
+            label="Password"
+            name="password"
+            autoComplete="current-password"
+            placeholder="Password"
+            labelClassName="mb-2 block text-sm font-medium text-gray-700"
+            wrapperClassName="relative"
+            inputClassName="block min-h-12 w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-gray-900 shadow-theme-sm outline-none transition placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+          />
 
           <button
             type="submit"

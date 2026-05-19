@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
 import { createEmployeeFineNotification } from "@/lib/notifications";
+import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/r2";
 import { createClient } from "@/lib/supabase/server";
 import { getVehicleFineFilePath } from "@/lib/vehicle-fines";
 import { VEHICLE_BUCKET } from "@/lib/vehicles";
@@ -55,21 +56,17 @@ function normalizeFineForm(formData, basePath) {
   };
 }
 
-async function uploadFineAttachment(supabase, fineId, file) {
+async function uploadFineAttachment(fineId, file) {
   const path = getVehicleFineFilePath(fineId, file);
 
   if (!path) {
     return null;
   }
 
-  const { error } = await supabase.storage.from(VEHICLE_BUCKET).upload(path, file, {
+  await uploadPrivateFile(VEHICLE_BUCKET, path, file, {
     cacheControl: "3600",
     upsert: false,
   });
-
-  if (error) {
-    throw new Error(error.message);
-  }
 
   return {
     attachment_path: path,
@@ -91,7 +88,7 @@ export async function createVehicleFine(formData) {
   let filePayload = null;
 
   try {
-    filePayload = await uploadFineAttachment(supabase, fineId, file);
+    filePayload = await uploadFineAttachment(fineId, file);
   } catch (error) {
     redirectWithError(basePath, error.message);
   }
@@ -107,7 +104,7 @@ export async function createVehicleFine(formData) {
 
   if (error) {
     if (filePayload?.attachment_path) {
-      await supabase.storage.from(VEHICLE_BUCKET).remove([filePayload.attachment_path]);
+      await deletePrivateFile(VEHICLE_BUCKET, filePayload.attachment_path);
     }
 
     redirectWithError(basePath, error.message);
@@ -133,7 +130,7 @@ export async function updateVehicleFine(id, formData) {
   let filePayload = null;
 
   try {
-    filePayload = await uploadFineAttachment(supabase, id, file);
+    filePayload = await uploadFineAttachment(id, file);
 
     if (filePayload) {
       Object.assign(updates, filePayload);
@@ -146,14 +143,14 @@ export async function updateVehicleFine(id, formData) {
 
   if (error) {
     if (filePayload?.attachment_path) {
-      await supabase.storage.from(VEHICLE_BUCKET).remove([filePayload.attachment_path]);
+      await deletePrivateFile(VEHICLE_BUCKET, filePayload.attachment_path);
     }
 
     redirectWithError(basePath, error.message);
   }
 
   if (filePayload?.attachment_path && existing.attachment_path) {
-    await supabase.storage.from(VEHICLE_BUCKET).remove([existing.attachment_path]);
+    await deletePrivateFile(VEHICLE_BUCKET, existing.attachment_path);
   }
 
   revalidatePath("/dashboard/vehicles");
@@ -174,7 +171,7 @@ export async function deleteVehicleFine(formData) {
   }
 
   if (existing.attachment_path) {
-    await supabase.storage.from(VEHICLE_BUCKET).remove([existing.attachment_path]);
+    await deletePrivateFile(VEHICLE_BUCKET, existing.attachment_path);
   }
 
   revalidatePath("/dashboard/vehicles");

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
 import { getSiteProjectFilePath, getSiteProjectFilePathForExtension, SITE_PROJECT_BUCKET } from "@/lib/site-projects";
+import { deletePrivateFile, movePrivateFile, uploadPrivateFile } from "@/lib/storage/r2";
 import { createClient } from "@/lib/supabase/server";
 
 function requireAdmin(profile) {
@@ -29,21 +30,17 @@ function redirectWithError(path, message) {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
 
-async function uploadSiteProjectFile(supabase, projectId, orderNo, file) {
+async function uploadSiteProjectFile(projectId, orderNo, file) {
   const path = getSiteProjectFilePath(projectId, orderNo, file);
 
   if (!path) {
     return null;
   }
 
-  const { error } = await supabase.storage.from(SITE_PROJECT_BUCKET).upload(path, file, {
+  await uploadPrivateFile(SITE_PROJECT_BUCKET, path, file, {
     cacheControl: "3600",
     upsert: true,
   });
-
-  if (error) {
-    throw new Error(error.message);
-  }
 
   return {
     project_file_path: path,
@@ -53,7 +50,7 @@ async function uploadSiteProjectFile(supabase, projectId, orderNo, file) {
   };
 }
 
-async function renameSiteProjectFileForOrderNo(supabase, projectId, orderNo, oldPath) {
+async function renameSiteProjectFileForOrderNo(projectId, orderNo, oldPath) {
   if (!oldPath) {
     return null;
   }
@@ -65,11 +62,7 @@ async function renameSiteProjectFileForOrderNo(supabase, projectId, orderNo, old
     return null;
   }
 
-  const { error } = await supabase.storage.from(SITE_PROJECT_BUCKET).move(oldPath, nextPath);
-
-  if (error) {
-    throw new Error(error.message);
-  }
+  await movePrivateFile(SITE_PROJECT_BUCKET, oldPath, nextPath);
 
   return {
     project_file_path: nextPath,
@@ -92,7 +85,7 @@ export async function createSiteProject(formData) {
   let errorMessage = null;
 
   try {
-    filePayload = await uploadSiteProjectFile(supabase, projectId, payload.order_no, file);
+    filePayload = await uploadSiteProjectFile(projectId, payload.order_no, file);
     const { error } = await supabase.from("site_projects").insert({
       id: projectId,
       ...payload,
@@ -101,7 +94,7 @@ export async function createSiteProject(formData) {
 
     if (error) {
       if (filePayload?.project_file_path) {
-        await supabase.storage.from(SITE_PROJECT_BUCKET).remove([filePayload.project_file_path]);
+        await deletePrivateFile(SITE_PROJECT_BUCKET, filePayload.project_file_path);
       }
       errorMessage = error.message;
     }
@@ -134,12 +127,12 @@ export async function updateSiteProject(id, formData) {
   let errorMessage = null;
 
   try {
-    filePayload = await uploadSiteProjectFile(supabase, id, payload.order_no, file);
+    filePayload = await uploadSiteProjectFile(id, payload.order_no, file);
 
     if (filePayload) {
       Object.assign(updates, filePayload);
     } else {
-      const renamePayload = await renameSiteProjectFileForOrderNo(supabase, id, payload.order_no, oldFilePath);
+      const renamePayload = await renameSiteProjectFileForOrderNo(id, payload.order_no, oldFilePath);
 
       if (renamePayload) {
         Object.assign(updates, renamePayload);
@@ -150,13 +143,13 @@ export async function updateSiteProject(id, formData) {
 
     if (error) {
       if (filePayload?.project_file_path && filePayload.project_file_path !== oldFilePath) {
-        await supabase.storage.from(SITE_PROJECT_BUCKET).remove([filePayload.project_file_path]);
+        await deletePrivateFile(SITE_PROJECT_BUCKET, filePayload.project_file_path);
       }
       errorMessage = error.message;
     }
 
     if (!errorMessage && filePayload?.project_file_path && oldFilePath && oldFilePath !== filePayload.project_file_path) {
-      await supabase.storage.from(SITE_PROJECT_BUCKET).remove([oldFilePath]);
+      await deletePrivateFile(SITE_PROJECT_BUCKET, oldFilePath);
     }
   } catch (error) {
     errorMessage = error.message;
@@ -183,7 +176,7 @@ export async function deleteSiteProject(formData) {
   }
 
   if (filePath) {
-    await supabase.storage.from(SITE_PROJECT_BUCKET).remove([filePath]);
+    await deletePrivateFile(SITE_PROJECT_BUCKET, filePath);
   }
 
   revalidatePath("/dashboard/site-projects");

@@ -8,6 +8,7 @@ import {
   COMPANY_DOCUMENT_CATEGORIES,
   getCompanyDocumentFilePath,
 } from "@/lib/company-documents";
+import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/r2";
 import { createClient } from "@/lib/supabase/server";
 
 function requireAdmin(profile) {
@@ -46,21 +47,17 @@ function redirectWithError(path, message) {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
 
-async function uploadCompanyDocumentFile(supabase, documentId, file) {
+async function uploadCompanyDocumentFile(documentId, file) {
   const path = getCompanyDocumentFilePath(documentId, file);
 
   if (!path) {
     return null;
   }
 
-  const { error } = await supabase.storage.from(COMPANY_DOCUMENT_BUCKET).upload(path, file, {
+  await uploadPrivateFile(COMPANY_DOCUMENT_BUCKET, path, file, {
     cacheControl: "3600",
     upsert: false,
   });
-
-  if (error) {
-    throw new Error(error.message);
-  }
 
   return {
     storage_path: path,
@@ -150,7 +147,7 @@ export async function createCompanyDocument(formData) {
   let errorMessage = null;
 
   try {
-    const filePayload = await uploadCompanyDocumentFile(supabase, documentId, file);
+    const filePayload = await uploadCompanyDocumentFile(documentId, file);
     const { error } = await supabase.from("company_documents").insert({
       id: documentId,
       ...payload,
@@ -159,7 +156,7 @@ export async function createCompanyDocument(formData) {
     });
 
     if (error) {
-      await supabase.storage.from(COMPANY_DOCUMENT_BUCKET).remove([filePayload.storage_path]);
+      await deletePrivateFile(COMPANY_DOCUMENT_BUCKET, filePayload.storage_path);
       errorMessage = error.message;
     }
   } catch (error) {
@@ -191,7 +188,7 @@ export async function updateCompanyDocument(id, formData) {
   let errorMessage = null;
 
   try {
-    const filePayload = await uploadCompanyDocumentFile(supabase, id, file);
+    const filePayload = await uploadCompanyDocumentFile(id, file);
 
     if (filePayload) {
       Object.assign(updates, filePayload);
@@ -201,13 +198,13 @@ export async function updateCompanyDocument(id, formData) {
 
     if (error) {
       if (filePayload?.storage_path) {
-        await supabase.storage.from(COMPANY_DOCUMENT_BUCKET).remove([filePayload.storage_path]);
+        await deletePrivateFile(COMPANY_DOCUMENT_BUCKET, filePayload.storage_path);
       }
       errorMessage = error.message;
     }
 
     if (!errorMessage && filePayload?.storage_path && oldStoragePath && oldStoragePath !== filePayload.storage_path) {
-      await supabase.storage.from(COMPANY_DOCUMENT_BUCKET).remove([oldStoragePath]);
+      await deletePrivateFile(COMPANY_DOCUMENT_BUCKET, oldStoragePath);
     }
   } catch (error) {
     errorMessage = error.message;
@@ -237,7 +234,7 @@ export async function deleteCompanyDocument(formData) {
   }
 
   if (storagePath) {
-    await supabase.storage.from(COMPANY_DOCUMENT_BUCKET).remove([storagePath]);
+    await deletePrivateFile(COMPANY_DOCUMENT_BUCKET, storagePath);
   }
 
   const redirectPath = getFileManagerRedirectPath(folderId);

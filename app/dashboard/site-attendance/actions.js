@@ -6,6 +6,7 @@ import { requireCurrentUserProfile } from "@/lib/auth";
 import { createAdminSubmissionNotification } from "@/lib/notifications";
 import { getLinkedEmployee } from "@/lib/site-allowance";
 import { getSiteAttendanceFilePath, SITE_ATTENDANCE_BUCKET, SITE_ATTENDANCE_TYPES } from "@/lib/site-attendance";
+import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/r2";
 import { createClient } from "@/lib/supabase/server";
 
 function isAdmin(profile) {
@@ -83,21 +84,17 @@ async function buildAttendancePayload(supabase, profile, formData, basePath) {
   };
 }
 
-async function uploadSiteAttendanceFile(supabase, employeeId, attendanceId, file) {
+async function uploadSiteAttendanceFile(employeeId, attendanceId, file) {
   const path = getSiteAttendanceFilePath(employeeId, attendanceId, file);
 
   if (!path) {
     return null;
   }
 
-  const { error } = await supabase.storage.from(SITE_ATTENDANCE_BUCKET).upload(path, file, {
+  await uploadPrivateFile(SITE_ATTENDANCE_BUCKET, path, file, {
     cacheControl: "3600",
     upsert: true,
   });
-
-  if (error) {
-    throw new Error(error.message);
-  }
 
   return {
     attendance_file_path: path,
@@ -118,7 +115,7 @@ export async function createSiteAttendance(formData) {
   let errorMessage = null;
 
   try {
-    filePayload = await uploadSiteAttendanceFile(supabase, payload.employee_id, attendanceId, file);
+    filePayload = await uploadSiteAttendanceFile(payload.employee_id, attendanceId, file);
   } catch (error) {
     errorMessage = error.message;
   }
@@ -135,7 +132,7 @@ export async function createSiteAttendance(formData) {
 
   if (error) {
     if (filePayload?.attendance_file_path) {
-      await supabase.storage.from(SITE_ATTENDANCE_BUCKET).remove([filePayload.attendance_file_path]);
+      await deletePrivateFile(SITE_ATTENDANCE_BUCKET, filePayload.attendance_file_path);
     }
 
     redirectWithError(basePath, error.message);
@@ -166,7 +163,7 @@ export async function updateSiteAttendance(id, formData) {
   let errorMessage = null;
 
   try {
-    filePayload = await uploadSiteAttendanceFile(supabase, payload.employee_id, id, file);
+    filePayload = await uploadSiteAttendanceFile(payload.employee_id, id, file);
 
     if (filePayload) {
       Object.assign(updates, filePayload);
@@ -186,14 +183,14 @@ export async function updateSiteAttendance(id, formData) {
 
   if (error) {
     if (filePayload?.attendance_file_path && filePayload.attendance_file_path !== existing.attendance_file_path) {
-      await supabase.storage.from(SITE_ATTENDANCE_BUCKET).remove([filePayload.attendance_file_path]);
+      await deletePrivateFile(SITE_ATTENDANCE_BUCKET, filePayload.attendance_file_path);
     }
 
     redirectWithError(basePath, error.message);
   }
 
   if (filePayload?.attendance_file_path && existing.attendance_file_path && existing.attendance_file_path !== filePayload.attendance_file_path) {
-    await supabase.storage.from(SITE_ATTENDANCE_BUCKET).remove([existing.attendance_file_path]);
+    await deletePrivateFile(SITE_ATTENDANCE_BUCKET, existing.attendance_file_path);
   }
 
   revalidatePath("/dashboard/site-attendance");
@@ -212,7 +209,7 @@ export async function deleteSiteAttendance(formData) {
   }
 
   if (existing.attendance_file_path) {
-    await supabase.storage.from(SITE_ATTENDANCE_BUCKET).remove([existing.attendance_file_path]);
+    await deletePrivateFile(SITE_ATTENDANCE_BUCKET, existing.attendance_file_path);
   }
 
   revalidatePath("/dashboard/site-attendance");

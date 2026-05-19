@@ -3,10 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
-import { getInstrumentFilePath } from "@/lib/instruments";
+import { getInstrumentFilePath, INSTRUMENT_BUCKET } from "@/lib/instruments";
+import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/r2";
 import { createClient } from "@/lib/supabase/server";
-
-const INSTRUMENT_BUCKET = "instrument-documents";
 
 function requireAdmin(profile) {
   if (profile?.role !== "admin") {
@@ -49,15 +48,13 @@ export async function createInstrument(formData) {
   const filePath = getInstrumentFilePath(inserted.id, file);
 
   if (filePath) {
-    const { error: uploadError } = await supabase.storage
-      .from(INSTRUMENT_BUCKET)
-      .upload(filePath, file, {
+    try {
+      await uploadPrivateFile(INSTRUMENT_BUCKET, filePath, file, {
         cacheControl: "3600",
         upsert: false,
       });
-
-    if (uploadError) {
-      redirect(`/dashboard/instruments/${inserted.id}/edit?error=${encodeURIComponent(uploadError.message)}`);
+    } catch (error) {
+      redirect(`/dashboard/instruments/${inserted.id}/edit?error=${encodeURIComponent(error.message)}`);
     }
 
     await supabase
@@ -83,6 +80,16 @@ export async function updateInstrument(id, formData) {
   }
 
   const supabase = await createClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("instruments")
+    .select("calibration_file_path")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existingError || !existing) {
+    redirect(`/dashboard/instruments/${id}/edit?error=${encodeURIComponent(existingError?.message || "Instrument not found.")}`);
+  }
+
   const { error: updateError } = await supabase.from("instruments").update(payload).eq("id", id);
 
   if (updateError) {
@@ -93,15 +100,13 @@ export async function updateInstrument(id, formData) {
   const filePath = getInstrumentFilePath(id, file);
 
   if (filePath) {
-    const { error: uploadError } = await supabase.storage
-      .from(INSTRUMENT_BUCKET)
-      .upload(filePath, file, {
+    try {
+      await uploadPrivateFile(INSTRUMENT_BUCKET, filePath, file, {
         cacheControl: "3600",
         upsert: false,
       });
-
-    if (uploadError) {
-      redirect(`/dashboard/instruments/${id}/edit?error=${encodeURIComponent(uploadError.message)}`);
+    } catch (error) {
+      redirect(`/dashboard/instruments/${id}/edit?error=${encodeURIComponent(error.message)}`);
     }
 
     const { error: fileUpdateError } = await supabase
@@ -112,7 +117,12 @@ export async function updateInstrument(id, formData) {
       .eq("id", id);
 
     if (fileUpdateError) {
+      await deletePrivateFile(INSTRUMENT_BUCKET, filePath);
       redirect(`/dashboard/instruments/${id}/edit?error=${encodeURIComponent(fileUpdateError.message)}`);
+    }
+
+    if (existing.calibration_file_path && existing.calibration_file_path !== filePath) {
+      await deletePrivateFile(INSTRUMENT_BUCKET, existing.calibration_file_path);
     }
   }
 
@@ -135,7 +145,7 @@ export async function deleteInstrument(formData) {
   }
 
   if (calibrationFilePath) {
-    await supabase.storage.from(INSTRUMENT_BUCKET).remove([calibrationFilePath]);
+    await deletePrivateFile(INSTRUMENT_BUCKET, calibrationFilePath);
   }
 
   revalidatePath("/dashboard/instruments");

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
 import { createEmployeeAccidentNotification } from "@/lib/notifications";
+import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/r2";
 import { createClient } from "@/lib/supabase/server";
 import { getVehicleAccidentFilePath } from "@/lib/vehicle-accidents";
 import { VEHICLE_BUCKET } from "@/lib/vehicles";
@@ -71,21 +72,17 @@ function normalizeAccidentForm(formData, basePath) {
   };
 }
 
-async function uploadAccidentAttachment(supabase, accidentId, file) {
+async function uploadAccidentAttachment(accidentId, file) {
   const path = getVehicleAccidentFilePath(accidentId, file);
 
   if (!path) {
     return null;
   }
 
-  const { error } = await supabase.storage.from(VEHICLE_BUCKET).upload(path, file, {
+  await uploadPrivateFile(VEHICLE_BUCKET, path, file, {
     cacheControl: "3600",
     upsert: false,
   });
-
-  if (error) {
-    throw new Error(error.message);
-  }
 
   return {
     attachment_path: path,
@@ -107,7 +104,7 @@ export async function createVehicleAccident(formData) {
   let filePayload = null;
 
   try {
-    filePayload = await uploadAccidentAttachment(supabase, accidentId, file);
+    filePayload = await uploadAccidentAttachment(accidentId, file);
   } catch (error) {
     redirectWithError(basePath, error.message);
   }
@@ -123,7 +120,7 @@ export async function createVehicleAccident(formData) {
 
   if (error) {
     if (filePayload?.attachment_path) {
-      await supabase.storage.from(VEHICLE_BUCKET).remove([filePayload.attachment_path]);
+      await deletePrivateFile(VEHICLE_BUCKET, filePayload.attachment_path);
     }
 
     redirectWithError(basePath, error.message);
@@ -149,7 +146,7 @@ export async function updateVehicleAccident(id, formData) {
   let filePayload = null;
 
   try {
-    filePayload = await uploadAccidentAttachment(supabase, id, file);
+    filePayload = await uploadAccidentAttachment(id, file);
 
     if (filePayload) {
       Object.assign(updates, filePayload);
@@ -162,14 +159,14 @@ export async function updateVehicleAccident(id, formData) {
 
   if (error) {
     if (filePayload?.attachment_path) {
-      await supabase.storage.from(VEHICLE_BUCKET).remove([filePayload.attachment_path]);
+      await deletePrivateFile(VEHICLE_BUCKET, filePayload.attachment_path);
     }
 
     redirectWithError(basePath, error.message);
   }
 
   if (filePayload?.attachment_path && existing.attachment_path) {
-    await supabase.storage.from(VEHICLE_BUCKET).remove([existing.attachment_path]);
+    await deletePrivateFile(VEHICLE_BUCKET, existing.attachment_path);
   }
 
   revalidatePath("/dashboard/vehicles");
@@ -190,7 +187,7 @@ export async function deleteVehicleAccident(formData) {
   }
 
   if (existing.attachment_path) {
-    await supabase.storage.from(VEHICLE_BUCKET).remove([existing.attachment_path]);
+    await deletePrivateFile(VEHICLE_BUCKET, existing.attachment_path);
   }
 
   revalidatePath("/dashboard/vehicles");
