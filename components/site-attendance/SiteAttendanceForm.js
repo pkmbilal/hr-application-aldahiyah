@@ -2,18 +2,17 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-
-function todayDate() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { getBrowserDateInputValue } from "@/lib/dates";
 
 function currentTime() {
   return new Date().toTimeString().slice(0, 5);
 }
 
-export function SiteAttendanceForm({ action, attendance, projects = [], employees = [], linkedEmployee, isAdmin, error }) {
+export function SiteAttendanceForm({ action, attendance, projects = [], employees = [], linkedEmployee, isAdmin, error, currentDate = "" }) {
   const initialProjectId = attendance?.project_id || projects[0]?.id || "";
   const [projectId, setProjectId] = useState(initialProjectId);
+  const [dateLimit] = useState(() => (typeof window === "undefined" ? currentDate : getBrowserDateInputValue()));
+  const [attendanceDate, setAttendanceDate] = useState(() => attendance?.attendance_date || (typeof window === "undefined" ? currentDate : getBrowserDateInputValue()));
   const selectedProject = useMemo(() => projects.find((project) => project.id === projectId), [projectId, projects]);
 
   return (
@@ -82,7 +81,7 @@ export function SiteAttendanceForm({ action, attendance, projects = [], employee
         </div>
 
         <ReadOnlyValue label="Order Number" value={selectedProject?.order_no || attendance?.order_no || "Select project"} />
-        <Field label="Date" name="attendance_date" type="date" defaultValue={attendance?.attendance_date || todayDate()} required />
+        <Field label="Date" name="attendance_date" type="date" value={attendanceDate} onChange={(event) => setAttendanceDate(event.target.value)} max={dateLimit} required />
         <Field label="Enter Time" name="enter_time" type="time" defaultValue={attendance?.enter_time?.slice(0, 5) || currentTime()} required />
         <Field label="Exit Time" name="exit_time" type="time" defaultValue={attendance?.exit_time?.slice(0, 5) || currentTime()} required />
 
@@ -160,7 +159,7 @@ export function SiteAttendanceForm({ action, attendance, projects = [], employee
   );
 }
 
-function Field({ label, name, type = "text", defaultValue, required = false }) {
+function Field({ label, name, type = "text", defaultValue, value, onChange, max, required = false }) {
   return (
     <div>
       <label htmlFor={name} className="text-sm font-medium text-slate-700">
@@ -171,6 +170,9 @@ function Field({ label, name, type = "text", defaultValue, required = false }) {
         name={name}
         type={type}
         defaultValue={defaultValue || ""}
+        value={value}
+        onChange={onChange}
+        max={max}
         required={required}
         className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
       />

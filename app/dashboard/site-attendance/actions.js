@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { getDateInputValue } from "@/lib/dates";
 import { createAdminSubmissionNotification } from "@/lib/notifications";
 import { getLinkedEmployee } from "@/lib/site-allowance";
 import { getSiteAttendanceFilePath, SITE_ATTENDANCE_BUCKET, SITE_ATTENDANCE_TYPES } from "@/lib/site-attendance";
@@ -55,6 +56,10 @@ async function buildAttendancePayload(supabase, profile, formData, basePath) {
 
   if (!projectId || !attendanceDate || !enterTime || !exitTime || !SITE_ATTENDANCE_TYPES.includes(attendanceType)) {
     redirectWithError(basePath, "Project, date, enter time, exit time, and type are required.");
+  }
+
+  if (attendanceDate > getDateInputValue()) {
+    redirectWithError(basePath, "Attendance date cannot be in the future.");
   }
 
   const { data: project, error: projectError } = await supabase
