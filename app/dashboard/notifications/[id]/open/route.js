@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request, { params }) {
@@ -14,6 +15,7 @@ export async function GET(request, { params }) {
     .from("notifications")
     .select("id, href, read_at")
     .eq("id", routeParams.id)
+    .eq("recipient_admin_id", claimsData.claims.sub)
     .maybeSingle();
 
   if (!notification) {
@@ -26,6 +28,8 @@ export async function GET(request, { params }) {
       .from("notifications")
       .update({ read_at: now, updated_at: now })
       .eq("id", notification.id);
+
+    revalidatePath("/dashboard", "layout");
   }
 
   return NextResponse.redirect(new URL(notification.href || "/dashboard", request.url));

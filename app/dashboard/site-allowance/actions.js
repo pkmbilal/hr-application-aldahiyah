@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import {
+  clearAllowanceAdvanceDeductions,
+  getAutoAdvanceDeduction,
+  replaceAllowanceAdvanceDeductions,
+} from "@/lib/employee-advances";
 import { createAdminSubmissionNotification } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -61,10 +66,13 @@ async function normalizePayload(formData, employeeId, profile, allowanceId = nul
   const items = buildAllowanceItemsFromAttendance(attendanceRows, SITE_ALLOWANCE_DAILY_RATE);
   const petrolAmount = optionalNumber(formData, "petrol_amount");
   const otherBillsAmount = optionalNumber(formData, "other_bills_amount");
-  const advanceAmount = optionalNumber(formData, "advance_amount");
-  const totals = calculateAllowanceTotals(items, petrolAmount, otherBillsAmount, advanceAmount);
+  const subtotalAmount = items.reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
   const requestedStatus = optionalText(formData, "status");
   const status = isAdmin(profile) && SITE_ALLOWANCE_STATUSES.includes(requestedStatus) ? requestedStatus : "Pending";
+  const advanceAmount = status === "Rejected"
+    ? 0
+    : await getAutoAdvanceDeduction(employeeId, subtotalAmount + petrolAmount + otherBillsAmount, allowanceId);
+  const totals = calculateAllowanceTotals(items, petrolAmount, otherBillsAmount, advanceAmount);
 
   return {
     allowance: {
@@ -135,6 +143,11 @@ export async function createSiteAllowance(formData) {
   }
 
   await lockAttendanceRows(supabase, payload.items, inserted.id);
+  if (payload.allowance.status === "Rejected") {
+    await clearAllowanceAdvanceDeductions(supabase, inserted.id);
+  } else {
+    await replaceAllowanceAdvanceDeductions(supabase, employeeId, inserted.id, payload.allowance.advance_amount);
+  }
 
   await createAdminSubmissionNotification({
     profile,
@@ -147,6 +160,7 @@ export async function createSiteAllowance(formData) {
 
   revalidatePath("/dashboard/site-allowance");
   revalidatePath("/dashboard/site-attendance");
+  revalidatePath("/dashboard/advances");
   redirect(`/dashboard/site-allowance/${inserted.id}`);
 }
 
@@ -189,8 +203,14 @@ export async function updateSiteAllowance(id, formData) {
   }
 
   await lockAttendanceRows(supabase, payload.items, id);
+  if (payload.allowance.status === "Rejected") {
+    await clearAllowanceAdvanceDeductions(supabase, id);
+  } else {
+    await replaceAllowanceAdvanceDeductions(supabase, employeeId, id, payload.allowance.advance_amount);
+  }
 
   revalidatePath("/dashboard/site-allowance");
+  revalidatePath("/dashboard/advances");
   revalidatePath("/dashboard/site-attendance");
   revalidatePath(`/dashboard/site-allowance/${id}`);
   redirect(`/dashboard/site-allowance/${id}`);
@@ -210,6 +230,7 @@ export async function deleteSiteAllowance(formData) {
 
   revalidatePath("/dashboard/site-allowance");
   revalidatePath("/dashboard/site-attendance");
+  revalidatePath("/dashboard/advances");
   redirect("/dashboard/site-allowance");
 }
 
@@ -230,7 +251,7 @@ export async function updateSiteAllowanceStatus(formData) {
   const supabase = await createClient();
   const { data: existing, error: existingError } = await supabase
     .from("site_allowances")
-    .select("id, status, approved_by, approved_at, paid_at")
+    .select("id, employee_id, status, approved_by, approved_at, paid_at, subtotal_amount, petrol_amount, other_bills_amount")
     .eq("id", id)
     .maybeSingle();
 
@@ -238,18 +259,31 @@ export async function updateSiteAllowanceStatus(formData) {
     redirect(`/dashboard/site-allowance?error=${encodeURIComponent(existingError?.message || "Record not found.")}`);
   }
 
-  const { error } = await supabase
-    .from("site_allowances")
-    .update(buildStatusUpdates(existing, status, profile))
-    .eq("id", id);
+  const statusChanged = existing.status !== status;
+  const updates = buildStatusUpdates(existing, status, profile);
+
+  if (status === "Rejected") {
+    await clearAllowanceAdvanceDeductions(supabase, id);
+    updates.advance_amount = 0;
+    updates.net_amount = Number(existing.subtotal_amount || 0) + Number(existing.petrol_amount || 0) + Number(existing.other_bills_amount || 0);
+  } else {
+    const payableBeforeAdvance = Number(existing.subtotal_amount || 0) + Number(existing.petrol_amount || 0) + Number(existing.other_bills_amount || 0);
+    const advanceAmount = await getAutoAdvanceDeduction(existing.employee_id, payableBeforeAdvance, id);
+    updates.advance_amount = advanceAmount;
+    updates.net_amount = payableBeforeAdvance - advanceAmount;
+    await replaceAllowanceAdvanceDeductions(supabase, existing.employee_id, id, advanceAmount);
+  }
+
+  const { error } = await supabase.from("site_allowances").update(updates).eq("id", id);
 
   if (error) {
     redirect(`/dashboard/site-allowance/${id}?error=${encodeURIComponent(error.message)}`);
   }
 
   revalidatePath("/dashboard/site-allowance");
+  revalidatePath("/dashboard/advances");
   revalidatePath(`/dashboard/site-allowance/${id}`);
-  redirect(`/dashboard/site-allowance/${id}`);
+  redirect(`/dashboard/site-allowance/${id}${statusChanged ? "?statusSaved=1" : ""}`);
 }
 
 async function getEditableAllowance(supabase, id, profile, redirectPath) {

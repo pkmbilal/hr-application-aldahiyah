@@ -5,7 +5,7 @@ import { requireCurrentUserProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export async function markNotificationAsRead(formData) {
-  await requireCurrentUserProfile();
+  const { profile } = await requireCurrentUserProfile();
   const id = String(formData.get("id") || "");
 
   if (!id) {
@@ -17,20 +17,22 @@ export async function markNotificationAsRead(formData) {
     .from("notifications")
     .update({ read_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq("id", id)
+    .eq("recipient_admin_id", profile.id)
     .is("read_at", null);
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 }
 
 export async function markAllNotificationsAsRead() {
-  await requireCurrentUserProfile();
+  const { profile } = await requireCurrentUserProfile();
 
   const now = new Date().toISOString();
   const supabase = await createClient();
   await supabase
     .from("notifications")
     .update({ read_at: now, updated_at: now })
+    .eq("recipient_admin_id", profile.id)
     .is("read_at", null);
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 }

@@ -80,6 +80,12 @@ export default async function DashboardPage() {
               >
                 Site Allowance
               </Link>
+              <Link
+                href="/dashboard/advances"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
+              >
+                Advances
+              </Link>
             </div>
           </div>
           <div className="border-t border-gray-200 bg-gray-25 p-4 sm:p-6 lg:border-l lg:border-t-0">
@@ -212,6 +218,12 @@ function EmployeeDashboard({ metrics }) {
                 className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
               >
                 Site Allowance
+              </Link>
+              <Link
+                href="/dashboard/advances"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-theme-sm transition hover:bg-gray-50"
+              >
+                Advances
               </Link>
             </div>
           </div>

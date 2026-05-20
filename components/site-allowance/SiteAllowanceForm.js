@@ -14,7 +14,7 @@ function currentMonth() {
 export function SiteAllowanceForm({ action, allowance, employees = [], linkedEmployee, isAdmin, error }) {
   const [petrolAmount, setPetrolAmount] = useState(String(allowance?.petrol_amount || 0));
   const [otherBillsAmount, setOtherBillsAmount] = useState(String(allowance?.other_bills_amount || 0));
-  const [advanceAmount, setAdvanceAmount] = useState(String(allowance?.advance_amount || 0));
+  const advanceAmount = Number(allowance?.advance_amount || 0);
   const items = useMemo(() => allowance?.site_allowance_items || [], [allowance?.site_allowance_items]);
 
   const totals = useMemo(() => {
@@ -136,7 +136,10 @@ export function SiteAllowanceForm({ action, allowance, employees = [], linkedEmp
         <div className="grid gap-5 lg:grid-cols-5">
           <MoneyField label="Petrol Bills Total" name="petrol_amount" value={petrolAmount} onChange={setPetrolAmount} />
           <MoneyField label="Other Bills Total" name="other_bills_amount" value={otherBillsAmount} onChange={setOtherBillsAmount} />
-          <MoneyField label="Advance Collected" name="advance_amount" value={advanceAmount} onChange={setAdvanceAmount} />
+          <ReadOnlyValue
+            label="Advance Deduction"
+            value={allowance ? formatCurrency(advanceAmount) : "Calculated on save"}
+          />
           <ReadOnlyValue label="Sub Total" value={formatCurrency(totals.subtotal)} />
           <ReadOnlyValue label="Net Payable" value={formatCurrency(totals.net)} strong />
         </div>
