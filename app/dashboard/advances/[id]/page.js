@@ -41,7 +41,7 @@ export default async function AdvanceDetailPage({ params, searchParams }) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
-              href={`/dashboard/advances/${advance.id}/print`}
+              href={`/advances/${advance.id}/print`}
               target="_blank"
               rel="noreferrer"
               className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"

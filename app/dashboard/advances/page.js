@@ -143,7 +143,7 @@ function AdvanceActions({ advance, isAdmin, canEdit }) {
         View
       </Link>
       <Link
-        href={`/dashboard/advances/${advance.id}/print`}
+        href={`/advances/${advance.id}/print`}
         target="_blank"
         rel="noreferrer"
         className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"

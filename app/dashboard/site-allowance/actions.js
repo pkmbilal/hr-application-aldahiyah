@@ -8,7 +8,7 @@ import {
   getAutoAdvanceDeduction,
   replaceAllowanceAdvanceDeductions,
 } from "@/lib/employee-advances";
-import { createAdminSubmissionNotification } from "@/lib/notifications";
+import { createAdminSubmissionNotification, createEmployeeSiteAllowanceNotification } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 import {
   SITE_ALLOWANCE_DAILY_RATE,
@@ -280,6 +280,16 @@ export async function updateSiteAllowanceStatus(formData) {
     redirect(`/dashboard/site-allowance/${id}?error=${encodeURIComponent(error.message)}`);
   }
 
+  if (statusChanged) {
+    await notifyEmployeeSiteAllowanceStatusChange({
+      supabase,
+      profile,
+      allowanceId: id,
+      employeeId: existing.employee_id,
+      status,
+    });
+  }
+
   revalidatePath("/dashboard/site-allowance");
   revalidatePath("/dashboard/advances");
   revalidatePath(`/dashboard/site-allowance/${id}`);
@@ -352,4 +362,17 @@ async function getNotificationActorName(supabase, employeeId, profile) {
     .maybeSingle();
 
   return data?.name || profile.full_name || profile.email || "An employee";
+}
+
+async function notifyEmployeeSiteAllowanceStatusChange({ supabase, profile, allowanceId, employeeId, status }) {
+  const employeeName = await getNotificationActorName(supabase, employeeId, profile);
+
+  await createEmployeeSiteAllowanceNotification({
+    profile,
+    employeeId,
+    allowanceId,
+    title: `Site allowance ${status}`,
+    body: `${employeeName}, your site allowance was marked ${status}.`,
+    href: `/dashboard/site-allowance/${allowanceId}`,
+  });
 }

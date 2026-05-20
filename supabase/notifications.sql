@@ -184,7 +184,7 @@ begin
     raise exception 'Unsupported notification event type';
   end if;
 
-  if p_entity_type <> 'employee_advance' then
+  if p_entity_type not in ('employee_advance', 'site_allowance') then
     raise exception 'Unsupported notification entity type';
   end if;
 
@@ -202,8 +202,17 @@ begin
     from public.employee_advances
     where employee_advances.id = p_entity_id
       and employee_advances.employee_id = p_employee_id
-  ) then
+  ) and p_entity_type = 'employee_advance' then
     raise exception 'Advance record not found for employee';
+  end if;
+
+  if not exists (
+    select 1
+    from public.site_allowances
+    where site_allowances.id = p_entity_id
+      and site_allowances.employee_id = p_employee_id
+  ) and p_entity_type = 'site_allowance' then
+    raise exception 'Site allowance record not found for employee';
   end if;
 
   insert into public.notifications (

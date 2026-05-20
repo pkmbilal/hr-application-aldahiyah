@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { updateEmployeeAdvance } from "@/app/dashboard/advances/actions";
 import { EmployeeAdvanceForm } from "@/components/advances/EmployeeAdvanceForm";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { getDateInputValue } from "@/lib/dates";
 import { getEmployeeAdvance, listAdvanceEmployeeOptions } from "@/lib/employee-advances";
 import { getLinkedEmployee } from "@/lib/site-allowance";
 import { listSiteProjects } from "@/lib/site-projects";
@@ -60,6 +61,7 @@ export default async function EditAdvancePage({ params, searchParams }) {
         projects={projects}
         linkedEmployee={linkedEmployee}
         isAdmin={isAdmin}
+        currentDate={getDateInputValue()}
         error={queryParams?.error}
       />
     </div>

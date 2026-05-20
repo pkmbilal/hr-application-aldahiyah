@@ -2,17 +2,16 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { getBrowserDateInputValue } from "@/lib/dates";
 
 const ADVANCE_PAYMENT_METHODS = ["cash", "bank transfer", "payroll adjustment", "other"];
 const ADVANCE_STATUSES = ["Pending", "Approved", "Rejected", "Paid", "Cancelled"];
 
-function todayDate() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export function EmployeeAdvanceForm({ action, advance, employees = [], projects = [], linkedEmployee, isAdmin, error }) {
+export function EmployeeAdvanceForm({ action, advance, employees = [], projects = [], linkedEmployee, isAdmin, error, currentDate = "" }) {
   const initialProjectId = advance?.project_id || projects[0]?.id || "";
   const [projectId, setProjectId] = useState(initialProjectId);
+  const [dateLimit] = useState(() => (typeof window === "undefined" ? currentDate : getBrowserDateInputValue()));
+  const [advanceDate, setAdvanceDate] = useState(() => advance?.advance_date || (typeof window === "undefined" ? currentDate : getBrowserDateInputValue()));
   const selectedProject = useMemo(() => projects.find((project) => project.id === projectId), [projectId, projects]);
 
   return (
@@ -72,7 +71,7 @@ export function EmployeeAdvanceForm({ action, advance, employees = [], projects 
         </div>
 
         <ReadOnlyValue label="Order Number" value={selectedProject?.order_no || advance?.order_no || "Select project"} />
-        <Field label="Advance Date" name="advance_date" type="date" defaultValue={advance?.advance_date || todayDate()} required />
+        <Field label="Advance Date" name="advance_date" type="date" value={advanceDate} onChange={(event) => setAdvanceDate(event.target.value)} max={dateLimit} required />
         <MoneyField label="Advance Amount" name="amount" defaultValue={advance?.amount || ""} />
 
         <div>
@@ -161,7 +160,7 @@ export function EmployeeAdvanceForm({ action, advance, employees = [], projects 
   );
 }
 
-function Field({ label, name, type = "text", defaultValue, required = false }) {
+function Field({ label, name, type = "text", defaultValue, value, onChange, max, required = false }) {
   return (
     <div>
       <label htmlFor={name} className="text-sm font-medium text-slate-700">
@@ -172,6 +171,9 @@ function Field({ label, name, type = "text", defaultValue, required = false }) {
         name={name}
         type={type}
         defaultValue={defaultValue || ""}
+        value={value}
+        onChange={onChange}
+        max={max}
         required={required}
         className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
       />

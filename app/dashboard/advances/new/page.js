@@ -1,6 +1,7 @@
 import { createEmployeeAdvance } from "@/app/dashboard/advances/actions";
 import { EmployeeAdvanceForm } from "@/components/advances/EmployeeAdvanceForm";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { getDateInputValue } from "@/lib/dates";
 import { listAdvanceEmployeeOptions } from "@/lib/employee-advances";
 import { getLinkedEmployee } from "@/lib/site-allowance";
 import { listSiteProjects } from "@/lib/site-projects";
@@ -35,6 +36,7 @@ export default async function NewAdvancePage({ searchParams }) {
         projects={projects}
         linkedEmployee={linkedEmployee}
         isAdmin={isAdmin}
+        currentDate={getDateInputValue()}
         error={params?.error}
       />
     </div>

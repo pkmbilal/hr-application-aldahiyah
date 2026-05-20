@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { getDateInputValue } from "@/lib/dates";
 import { createAdminSubmissionNotification, createEmployeeAdvanceNotification } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 import { getLinkedEmployee } from "@/lib/site-allowance";
@@ -60,6 +61,10 @@ async function buildAdvancePayload(supabase, profile, formData, basePath, existi
 
   if (!projectId || !amount || !advanceDate || !ADVANCE_PAYMENT_METHODS.includes(paymentMethod)) {
     redirectWithError(basePath, "Project, amount, advance date, and payment method are required.");
+  }
+
+  if (advanceDate > getDateInputValue()) {
+    redirectWithError(basePath, "Advance date cannot be in the future.");
   }
 
   const { data: project, error: projectError } = await supabase
