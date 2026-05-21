@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { updateSiteAllowanceStatus } from "@/app/dashboard/site-allowance/actions";
+import { SiteAllowanceStatusForm } from "@/components/site-allowance/SiteAllowanceStatusForm";
 import { requireCurrentUserProfile } from "@/lib/auth";
 import { formatTime, listAttendanceForAllowance } from "@/lib/site-attendance";
 import { formatClaimMonth, formatCurrency, formatDate, getSiteAllowance } from "@/lib/site-allowance";
@@ -71,32 +72,12 @@ export default async function SiteAllowanceDetailPage({ params, searchParams }) 
 
       {isAdmin ? (
         <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-sm">
-          <form action={updateSiteAllowanceStatus} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <input type="hidden" name="id" value={allowance.id} />
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <label htmlFor="status" className="text-sm font-medium text-slate-700 sm:whitespace-nowrap">
-                Update Status
-              </label>
-              <select
-                id="status"
-                name="status"
-                defaultValue={allowance.status}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100 sm:w-56"
-              >
-                {["Pending", "Approved", "Rejected", "Paid"].map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              type="submit"
-              className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
-            >
-              Save Status
-            </button>
-          </form>
+          <SiteAllowanceStatusForm
+            action={updateSiteAllowanceStatus}
+            allowanceId={allowance.id}
+            status={allowance.status}
+            saved={queryParams?.statusSaved === "1"}
+          />
         </section>
       ) : null}
 

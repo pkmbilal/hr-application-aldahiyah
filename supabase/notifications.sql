@@ -3,7 +3,7 @@ create table if not exists public.notifications (
   recipient_admin_id uuid not null references auth.users(id) on delete cascade,
   actor_user_id uuid references auth.users(id) on delete set null,
   event_type text not null check (event_type in ('created')),
-  entity_type text not null check (entity_type in ('site_attendance', 'site_allowance', 'vehicle_fine')),
+  entity_type text not null check (entity_type in ('site_attendance', 'site_allowance', 'vehicle_fine', 'vehicle_accident', 'employee_advance')),
   entity_id uuid not null,
   title text not null,
   body text,
@@ -87,7 +87,7 @@ begin
     raise exception 'Unsupported notification event type';
   end if;
 
-  if p_entity_type not in ('site_attendance', 'site_allowance') then
+  if p_entity_type not in ('site_attendance', 'site_allowance', 'employee_advance') then
     raise exception 'Unsupported notification entity type';
   end if;
 
@@ -107,6 +107,15 @@ begin
       and site_allowances.created_by = auth.uid()
   ) then
     raise exception 'Allowance record not found for current user';
+  end if;
+
+  if p_entity_type = 'employee_advance' and not exists (
+    select 1
+    from public.employee_advances
+    where employee_advances.id = p_entity_id
+      and employee_advances.created_by = auth.uid()
+  ) then
+    raise exception 'Advance record not found for current user';
   end if;
 
   insert into public.notifications (
@@ -140,3 +149,109 @@ $$;
 revoke execute on function public.create_admin_notification(uuid, text, text, uuid, text, text, text) from public;
 revoke execute on function public.create_admin_notification(uuid, text, text, uuid, text, text, text) from anon;
 grant execute on function public.create_admin_notification(uuid, text, text, uuid, text, text, text) to authenticated;
+
+create or replace function public.create_employee_notification(
+  p_employee_id uuid,
+  p_actor_user_id uuid,
+  p_event_type text,
+  p_entity_type text,
+  p_entity_id uuid,
+  p_title text,
+  p_body text,
+  p_href text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_employee_user_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  if not public.is_admin_user() then
+    raise exception 'Admin access required';
+  end if;
+
+  if p_actor_user_id <> auth.uid() then
+    raise exception 'Notification actor must match the current user';
+  end if;
+
+  if p_event_type <> 'created' then
+    raise exception 'Unsupported notification event type';
+  end if;
+
+  if p_entity_type not in ('employee_advance', 'site_allowance') then
+    raise exception 'Unsupported notification entity type';
+  end if;
+
+  select employees.user_id
+  into v_employee_user_id
+  from public.employees
+  where employees.id = p_employee_id;
+
+  if v_employee_user_id is null then
+    return false;
+  end if;
+
+  if not exists (
+    select 1
+    from public.employee_advances
+    where employee_advances.id = p_entity_id
+      and employee_advances.employee_id = p_employee_id
+  ) and p_entity_type = 'employee_advance' then
+    raise exception 'Advance record not found for employee';
+  end if;
+
+  if not exists (
+    select 1
+    from public.site_allowances
+    where site_allowances.id = p_entity_id
+      and site_allowances.employee_id = p_employee_id
+  ) and p_entity_type = 'site_allowance' then
+    raise exception 'Site allowance record not found for employee';
+  end if;
+
+  insert into public.notifications (
+    recipient_admin_id,
+    actor_user_id,
+    event_type,
+    entity_type,
+    entity_id,
+    title,
+    body,
+    href,
+    read_at,
+    updated_at
+  )
+  values (
+    v_employee_user_id,
+    p_actor_user_id,
+    p_event_type,
+    p_entity_type,
+    p_entity_id,
+    p_title,
+    p_body,
+    p_href,
+    null,
+    now()
+  )
+  on conflict (recipient_admin_id, event_type, entity_type, entity_id)
+  do update set
+    actor_user_id = excluded.actor_user_id,
+    title = excluded.title,
+    body = excluded.body,
+    href = excluded.href,
+    read_at = null,
+    updated_at = now();
+
+  return true;
+end;
+$$;
+
+revoke execute on function public.create_employee_notification(uuid, uuid, text, text, uuid, text, text, text) from public;
+revoke execute on function public.create_employee_notification(uuid, uuid, text, text, uuid, text, text, text) from anon;
+grant execute on function public.create_employee_notification(uuid, uuid, text, text, uuid, text, text, text) to authenticated;

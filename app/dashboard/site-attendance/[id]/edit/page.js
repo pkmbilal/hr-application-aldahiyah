@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { updateSiteAttendance } from "@/app/dashboard/site-attendance/actions";
 import { SiteAttendanceForm } from "@/components/site-attendance/SiteAttendanceForm";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { getDateInputValue } from "@/lib/dates";
 import { getLinkedEmployee, listAllowanceEmployeeOptions } from "@/lib/site-allowance";
 import { getSiteAttendance } from "@/lib/site-attendance";
 import { listSiteProjects } from "@/lib/site-projects";
@@ -45,6 +46,7 @@ export default async function EditSiteAttendancePage({ params, searchParams }) {
         employees={employees}
         linkedEmployee={linkedEmployee}
         isAdmin={isAdmin}
+        currentDate={getDateInputValue()}
         error={queryParams?.error}
       />
     </div>

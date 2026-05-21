@@ -40,6 +40,7 @@ export function DashboardShell({ children, profile, linkedEmployee, notification
       "/dashboard/employees",
       "/dashboard/site-attendance",
       "/dashboard/site-allowance",
+      "/dashboard/advances",
       "/dashboard/file-manager",
       "/dashboard/site-projects",
       "/dashboard/instruments",
@@ -48,7 +49,7 @@ export function DashboardShell({ children, profile, linkedEmployee, notification
     return employeeOrder.indexOf(first.href) - employeeOrder.indexOf(second.href);
   });
   const mobilePrimaryHrefs = ["/dashboard", "/dashboard/employees", "/dashboard/site-attendance", "/dashboard/site-allowance"];
-  const mobileMoreHrefs = ["/dashboard/file-manager", "/dashboard/instruments", "/dashboard/vehicles", "/dashboard/site-projects"];
+  const mobileMoreHrefs = ["/dashboard/advances", "/dashboard/file-manager", "/dashboard/instruments", "/dashboard/vehicles", "/dashboard/site-projects"];
   const mobilePrimaryItems = mobilePrimaryHrefs
     .map((href) => navItems.find((item) => item.href === href))
     .filter(Boolean);

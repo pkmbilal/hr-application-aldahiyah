@@ -75,6 +75,7 @@ export function NotificationBell({ notifications, unreadCount, markAllReadAction
                     <div className="rounded-xl px-2.5 py-2.5 transition hover:bg-gray-50">
                       <Link
                         href={`/dashboard/notifications/${notification.id}/open`}
+                        prefetch={false}
                         onClick={() => setIsOpen(false)}
                         className="block"
                       >

@@ -1,6 +1,7 @@
 import { createSiteAttendance } from "@/app/dashboard/site-attendance/actions";
 import { SiteAttendanceForm } from "@/components/site-attendance/SiteAttendanceForm";
 import { requireCurrentUserProfile } from "@/lib/auth";
+import { getDateInputValue } from "@/lib/dates";
 import { getLinkedEmployee, listAllowanceEmployeeOptions } from "@/lib/site-allowance";
 import { listSiteProjects } from "@/lib/site-projects";
 
@@ -33,6 +34,7 @@ export default async function NewSiteAttendancePage({ searchParams }) {
         employees={employees}
         linkedEmployee={linkedEmployee}
         isAdmin={isAdmin}
+        currentDate={getDateInputValue()}
         error={params?.error}
       />
     </div>
