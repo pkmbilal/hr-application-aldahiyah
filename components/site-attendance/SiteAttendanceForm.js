@@ -160,6 +160,10 @@ export function SiteAttendanceForm({ action, attendance, projects = [], employee
 }
 
 function Field({ label, name, type = "text", defaultValue, value, onChange, max, required = false }) {
+  const inputProps = value === undefined
+    ? { defaultValue: defaultValue || "" }
+    : { value, onChange };
+
   return (
     <div>
       <label htmlFor={name} className="text-sm font-medium text-slate-700">
@@ -169,9 +173,7 @@ function Field({ label, name, type = "text", defaultValue, value, onChange, max,
         id={name}
         name={name}
         type={type}
-        defaultValue={defaultValue || ""}
-        value={value}
-        onChange={onChange}
+        {...inputProps}
         max={max}
         required={required}
         className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"

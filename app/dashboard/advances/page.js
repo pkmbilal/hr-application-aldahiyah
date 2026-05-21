@@ -2,7 +2,7 @@ import Link from "next/link";
 import { deleteEmployeeAdvance } from "@/app/dashboard/advances/actions";
 import { DeleteConfirmationButton } from "@/components/dashboard/DeleteConfirmationButton";
 import { requireCurrentUserProfile } from "@/lib/auth";
-import { formatCurrency, formatDate, formatPaymentMethod, listEmployeeAdvances } from "@/lib/employee-advances";
+import { buildAdvanceSummary, formatCurrency, formatDate, formatPaymentMethod, listEmployeeAdvances } from "@/lib/employee-advances";
 
 export const metadata = {
   title: "Advances | HR Aldahiyah",
@@ -13,6 +13,7 @@ export default async function AdvancesPage({ searchParams }) {
   const isAdmin = profile?.role === "admin";
   const params = await searchParams;
   const advances = await listEmployeeAdvances();
+  const advanceSummary = buildAdvanceSummary(advances);
 
   return (
     <div className="space-y-6">
@@ -39,6 +40,37 @@ export default async function AdvancesPage({ searchParams }) {
           {params.error}
         </div>
       ) : null}
+
+      <section className={`grid gap-4 sm:grid-cols-2 ${isAdmin ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
+        <SummaryCard
+          label={isAdmin ? "Total Advance Now" : "My Advance Now"}
+          value={formatCurrency(advanceSummary.balanceAmount)}
+          note="Outstanding balance from Paid advances"
+          tone="blue"
+        />
+        <SummaryCard
+          label={isAdmin ? "Total Paid Advances" : "My Paid Advances"}
+          value={formatCurrency(advanceSummary.paidAmount)}
+          note="Original amount marked as Paid"
+          tone="emerald"
+        />
+        <SummaryCard
+          label="Total Deducted"
+          value={formatCurrency(advanceSummary.deductedAmount)}
+          note="Recovered through site allowances"
+          tone="amber"
+        />
+        {isAdmin ? (
+          <SummaryCard
+            label="Employees With Balance"
+            value={advanceSummary.employeesWithBalance}
+            note="Employees with outstanding Paid balance"
+            tone="rose"
+          />
+        ) : null}
+      </section>
+
+      {isAdmin ? <EmployeeAdvanceSummaryTable rows={advanceSummary.employeeRows} /> : null}
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
         <div className="divide-y divide-slate-100 md:hidden">
@@ -133,6 +165,80 @@ export default async function AdvancesPage({ searchParams }) {
   );
 }
 
+function EmployeeAdvanceSummaryTable({ rows }) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
+      <div className="border-b border-slate-100 px-5 py-4">
+        <h2 className="text-base font-semibold text-slate-950">Employee Advance Balances</h2>
+        <p className="mt-1 text-sm text-slate-500">Paid advances minus deductions, grouped employee-wise.</p>
+      </div>
+
+      <div className="divide-y divide-slate-100 md:hidden">
+        {rows.map((row) => (
+          <article key={row.employee_id} className="space-y-4 p-4">
+            <div>
+              <p className="text-base font-semibold text-slate-950">{row.employee_name}</p>
+              {row.employee_email ? <p className="mt-1 text-sm text-slate-500">{row.employee_email}</p> : null}
+            </div>
+            <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
+              <MiniItem label="Paid Total" value={formatCurrency(row.paid_amount)} />
+              <MiniItem label="Deducted" value={formatCurrency(row.deducted_amount)} />
+              <MiniItem label="Balance Now" value={formatCurrency(row.balance_amount)} />
+              <MiniItem label="Latest" value={row.latest_advance ? formatDate(row.latest_advance.advance_date) : "Not set"} />
+            </div>
+          </article>
+        ))}
+        {!rows.length ? <EmptyState message="No paid advances recorded yet." /> : null}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
+        <table className="min-w-full divide-y divide-slate-200">
+          <thead className="bg-slate-50">
+            <tr>
+              <Header>Employee</Header>
+              <Header>Paid Advance Total</Header>
+              <Header>Deducted</Header>
+              <Header>Balance Now</Header>
+              <Header>Latest Advance</Header>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {rows.map((row) => (
+              <tr key={row.employee_id}>
+                <Cell strong>
+                  <div>
+                    <p>{row.employee_name}</p>
+                    {row.employee_email ? <p className="mt-1 text-xs font-normal text-slate-500">{row.employee_email}</p> : null}
+                  </div>
+                </Cell>
+                <Cell strong>{formatCurrency(row.paid_amount)}</Cell>
+                <Cell>{formatCurrency(row.deducted_amount)}</Cell>
+                <Cell strong>{formatCurrency(row.balance_amount)}</Cell>
+                <Cell>
+                  {row.latest_advance ? (
+                    <Link href={`/dashboard/advances/${row.latest_advance.id}`} className="font-semibold text-slate-950 underline-offset-4 hover:underline">
+                      {row.latest_advance.reference_no} - {formatDate(row.latest_advance.advance_date)}
+                    </Link>
+                  ) : (
+                    "Not set"
+                  )}
+                </Cell>
+              </tr>
+            ))}
+            {!rows.length ? (
+              <tr>
+                <td colSpan={5} className="px-5 py-12 text-center text-sm text-slate-500">
+                  No paid advances recorded yet.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 function AdvanceActions({ advance, isAdmin, canEdit }) {
   return (
     <>
@@ -197,6 +303,23 @@ function MiniItem({ label, value }) {
   );
 }
 
+function SummaryCard({ label, value, note, tone }) {
+  const tones = {
+    blue: "border-brand-100 bg-brand-50 text-brand-700",
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-700",
+    amber: "border-amber-100 bg-amber-50 text-amber-700",
+    rose: "border-rose-100 bg-rose-50 text-rose-700",
+  };
+
+  return (
+    <section className={`rounded-xl border bg-white p-4 shadow-theme-sm sm:rounded-2xl sm:p-5 ${tones[tone]}`}>
+      <p className="text-sm font-semibold">{label}</p>
+      <p className="mt-2 text-xl font-bold text-slate-950 sm:text-2xl">{value}</p>
+      <p className="mt-2 text-sm text-slate-600">{note}</p>
+    </section>
+  );
+}
+
 function StatusBadge({ status, compact = false }) {
   const tones = {
     Pending: "bg-amber-50 text-amber-700 ring-amber-100",
@@ -214,6 +337,6 @@ function StatusBadge({ status, compact = false }) {
   );
 }
 
-function EmptyState() {
-  return <div className="px-5 py-12 text-center text-sm text-slate-500">No advances recorded yet.</div>;
+function EmptyState({ message = "No advances recorded yet." }) {
+  return <div className="px-5 py-12 text-center text-sm text-slate-500">{message}</div>;
 }
