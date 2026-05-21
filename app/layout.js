@@ -7,8 +7,21 @@ const inter = Inter({
 });
 
 export const metadata = {
+  applicationName: "HR Aldahiyah",
   title: "HR Aldahiyah",
   description: "Internal office dashboard for employees, instruments, and vehicles.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "HR Aldahiyah",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport = {
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({ children }) {

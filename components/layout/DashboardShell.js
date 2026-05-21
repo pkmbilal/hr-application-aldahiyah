@@ -8,6 +8,7 @@ import { MobileHeaderTitle } from "@/components/layout/MobileHeaderTitle";
 import { MobileMoreNav } from "@/components/layout/MobileMoreNav";
 import { MobileUserMenu } from "@/components/layout/MobileUserMenu";
 import { NotificationBell } from "@/components/layout/NotificationBell";
+import { PwaInstallButton } from "@/components/layout/PwaInstallButton";
 
 export function DashboardShell({ children, profile, linkedEmployee, notificationSummary }) {
   const isAdmin = profile?.role === "admin";
@@ -117,6 +118,7 @@ export function DashboardShell({ children, profile, linkedEmployee, notification
               <h1 className="text-lg font-semibold text-gray-900">Office Records</h1>
             </div>
             <div className="flex shrink-0 items-center gap-3 sm:gap-3">
+              <PwaInstallButton />
               <NotificationBell
                 notifications={notificationSummary?.notifications || []}
                 unreadCount={notificationSummary?.unreadCount || 0}
