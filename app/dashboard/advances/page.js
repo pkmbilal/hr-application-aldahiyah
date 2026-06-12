@@ -14,6 +14,8 @@ export default async function AdvancesPage({ searchParams }) {
   const params = await searchParams;
   const advances = await listEmployeeAdvances();
   const advanceSummary = buildAdvanceSummary(advances);
+  const jobAdvances = advances.filter((advance) => (advance.advance_type || "Job") === "Job");
+  const generalAdvances = advances.filter((advance) => advance.advance_type === "General");
 
   return (
     <div className="space-y-6">
@@ -73,8 +75,11 @@ export default async function AdvancesPage({ searchParams }) {
       {isAdmin ? <EmployeeAdvanceSummaryTable rows={advanceSummary.employeeRows} /> : null}
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <h2 className="text-base font-semibold text-slate-950">Job Advances</h2>
+        </div>
         <div className="divide-y divide-slate-100 md:hidden">
-          {advances.map((advance) => {
+          {jobAdvances.map((advance) => {
             const canEdit = isAdmin || advance.status === "Pending";
 
             return (
@@ -104,7 +109,7 @@ export default async function AdvancesPage({ searchParams }) {
               </article>
             );
           })}
-          {!advances.length ? <EmptyState /> : null}
+          {!jobAdvances.length ? <EmptyState message="No job advances recorded yet." /> : null}
         </div>
 
         <div className="hidden overflow-x-auto md:block">
@@ -123,7 +128,7 @@ export default async function AdvancesPage({ searchParams }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
-              {advances.map((advance) => {
+              {jobAdvances.map((advance) => {
                 const canEdit = isAdmin || advance.status === "Pending";
 
                 return (
@@ -150,10 +155,103 @@ export default async function AdvancesPage({ searchParams }) {
                   </tr>
                 );
               })}
-              {!advances.length ? (
+              {!jobAdvances.length ? (
                 <tr>
                   <td colSpan={isAdmin ? 9 : 8} className="px-5 py-12 text-center text-sm text-slate-500">
-                    No advances recorded yet.
+                    No job advances recorded yet.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <h2 className="text-base font-semibold text-slate-950">General Advances</h2>
+        </div>
+        <div className="divide-y divide-slate-100 md:hidden">
+          {generalAdvances.map((advance) => {
+            const canEdit = isAdmin || advance.status === "Pending";
+
+            return (
+              <article key={advance.id} className="space-y-4 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <Link href={`/dashboard/advances/${advance.id}`} className="block truncate text-base font-semibold text-slate-950">
+                      {advance.reference_no}
+                    </Link>
+                    <p className="mt-1 truncate text-sm text-slate-500">
+                      {isAdmin ? `${advance.employees?.name || "Not linked"} - ` : ""}{advance.reason || "General purpose"}
+                    </p>
+                  </div>
+                  <StatusBadge status={advance.display_status} compact />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
+                  <MiniItem label="Amount" value={formatCurrency(advance.amount)} />
+                  <MiniItem label="Balance" value={formatCurrency(advance.balance_amount)} />
+                  <MiniItem label="Date" value={formatDate(advance.advance_date)} />
+                  <MiniItem label="Payment" value={formatPaymentMethod(advance.payment_method)} />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <AdvanceActions advance={advance} isAdmin={isAdmin} canEdit={canEdit} />
+                </div>
+              </article>
+            );
+          })}
+          {!generalAdvances.length ? <EmptyState message="No general advances recorded yet." /> : null}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <Header>Reference</Header>
+                {isAdmin ? <Header>Employee</Header> : null}
+                <Header>Purpose</Header>
+                <Header>Date</Header>
+                <Header>Amount</Header>
+                <Header>Deducted</Header>
+                <Header>Balance</Header>
+                <Header>Status</Header>
+                <Header>Actions</Header>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {generalAdvances.map((advance) => {
+                const canEdit = isAdmin || advance.status === "Pending";
+
+                return (
+                  <tr key={advance.id}>
+                    <Cell strong>
+                      <Link href={`/dashboard/advances/${advance.id}`} className="underline-offset-4 hover:underline">
+                        {advance.reference_no}
+                      </Link>
+                    </Cell>
+                    {isAdmin ? <Cell strong>{advance.employees?.name || "Not linked"}</Cell> : null}
+                    <Cell>{advance.reason || "General purpose"}</Cell>
+                    <Cell>{formatDate(advance.advance_date)}</Cell>
+                    <Cell strong>{formatCurrency(advance.amount)}</Cell>
+                    <Cell>{formatCurrency(advance.deducted_amount)}</Cell>
+                    <Cell strong>{formatCurrency(advance.balance_amount)}</Cell>
+                    <Cell>
+                      <StatusBadge status={advance.display_status} />
+                    </Cell>
+                    <Cell>
+                      <div className="flex items-center gap-2">
+                        <AdvanceActions advance={advance} isAdmin={isAdmin} canEdit={canEdit} />
+                      </div>
+                    </Cell>
+                  </tr>
+                );
+              })}
+              {!generalAdvances.length ? (
+                <tr>
+                  <td colSpan={isAdmin ? 9 : 8} className="px-5 py-12 text-center text-sm text-slate-500">
+                    No general advances recorded yet.
                   </td>
                 </tr>
               ) : null}

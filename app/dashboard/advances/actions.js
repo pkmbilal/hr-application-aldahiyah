@@ -7,7 +7,7 @@ import { getDateInputValue } from "@/lib/dates";
 import { createAdminSubmissionNotification, createEmployeeAdvanceNotification } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 import { getLinkedEmployee } from "@/lib/site-allowance";
-import { ADVANCE_PAYMENT_METHODS, ADVANCE_STATUSES } from "@/lib/employee-advances";
+import { ADVANCE_PAYMENT_METHODS, ADVANCE_STATUSES, ADVANCE_TYPES } from "@/lib/employee-advances";
 
 function isAdmin(profile) {
   return profile?.role === "admin";
@@ -52,19 +52,45 @@ async function resolveEmployeeId(profile, formData, basePath) {
 
 async function buildAdvancePayload(supabase, profile, formData, basePath, existing = null) {
   const employeeId = existing && !isAdmin(profile) ? existing.employee_id : await resolveEmployeeId(profile, formData, basePath);
-  const projectId = requiredText(formData, "project_id");
+  const advanceType = requiredText(formData, "advance_type") || "Job";
+  const projectId = optionalText(formData, "project_id");
   const amount = optionalNumber(formData, "amount");
   const advanceDate = requiredText(formData, "advance_date");
   const paymentMethod = requiredText(formData, "payment_method");
   const requestedStatus = optionalText(formData, "status");
+  const reason = optionalText(formData, "reason");
   const status = isAdmin(profile) && ADVANCE_STATUSES.includes(requestedStatus) ? requestedStatus : "Pending";
 
-  if (!projectId || !amount || !advanceDate || !ADVANCE_PAYMENT_METHODS.includes(paymentMethod)) {
-    redirectWithError(basePath, "Project, amount, advance date, and payment method are required.");
+  if (!ADVANCE_TYPES.includes(advanceType) || !amount || !advanceDate || !ADVANCE_PAYMENT_METHODS.includes(paymentMethod)) {
+    redirectWithError(basePath, "Advance type, amount, advance date, and payment method are required.");
   }
 
   if (advanceDate > getDateInputValue()) {
     redirectWithError(basePath, "Advance date cannot be in the future.");
+  }
+
+  if (advanceType === "General") {
+    if (!reason) {
+      redirectWithError(basePath, "Reason / Notes is required for general advances.");
+    }
+
+    return {
+      advance_type: advanceType,
+      employee_id: employeeId,
+      project_id: null,
+      project_name: null,
+      order_no: null,
+      amount,
+      advance_date: advanceDate,
+      payment_method: paymentMethod,
+      reason,
+      admin_notes: isAdmin(profile) ? optionalText(formData, "admin_notes") : existing?.admin_notes || null,
+      status,
+    };
+  }
+
+  if (!projectId) {
+    redirectWithError(basePath, "Project is required for job advances.");
   }
 
   const { data: project, error: projectError } = await supabase
@@ -82,6 +108,7 @@ async function buildAdvancePayload(supabase, profile, formData, basePath, existi
   }
 
   return {
+    advance_type: advanceType,
     employee_id: employeeId,
     project_id: project.id,
     project_name: project.name,
@@ -89,7 +116,7 @@ async function buildAdvancePayload(supabase, profile, formData, basePath, existi
     amount,
     advance_date: advanceDate,
     payment_method: paymentMethod,
-    reason: optionalText(formData, "reason"),
+    reason,
     admin_notes: isAdmin(profile) ? optionalText(formData, "admin_notes") : existing?.admin_notes || null,
     status,
   };
@@ -125,7 +152,7 @@ export async function createEmployeeAdvance(formData) {
     body: `${await getNotificationActorName(supabase, payload.employee_id, profile)} requested ${payload.amount.toLocaleString("en", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    })} SAR for ${payload.project_name}.`,
+    })} SAR for ${payload.advance_type === "General" ? "a general purpose" : payload.project_name}.`,
     href: `/dashboard/advances/${inserted.id}`,
   });
 

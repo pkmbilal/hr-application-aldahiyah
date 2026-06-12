@@ -27,6 +27,8 @@ export default async function AdvanceDetailPage({ params, searchParams }) {
   }
 
   const canEdit = isAdmin || advance.status === "Pending";
+  const isGeneralAdvance = advance.advance_type === "General";
+  const advanceContext = isGeneralAdvance ? advance.reason || "General purpose" : advance.project_name || "Not set";
 
   return (
     <div className="space-y-6">
@@ -88,8 +90,15 @@ export default async function AdvanceDetailPage({ params, searchParams }) {
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-sm sm:rounded-2xl">
         <div className="grid gap-px bg-slate-100 sm:grid-cols-2 xl:grid-cols-4">
           <Info label="Employee" value={advance.employees?.name || "Not linked"} />
-          <Info label="Project" value={advance.project_name} />
-          <Info label="Order Number" value={advance.order_no || "Not set"} />
+          <Info label="Advance Type" value={advance.advance_type || "Job"} />
+          {isGeneralAdvance ? (
+            <Info label="Purpose" value={advanceContext} />
+          ) : (
+            <>
+              <Info label="Project" value={advance.project_name || "Not set"} />
+              <Info label="Order Number" value={advance.order_no || "Not set"} />
+            </>
+          )}
           <Info label="Advance Date" value={formatDate(advance.advance_date)} />
           <Info label="Reference No." value={advance.reference_no} />
           <Info label="Payment Method" value={formatPaymentMethod(advance.payment_method)} />
