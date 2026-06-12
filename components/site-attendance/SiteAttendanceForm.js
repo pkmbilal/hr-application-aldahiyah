@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { getBrowserDateInputValue } from "@/lib/dates";
 
 function currentTime() {
@@ -13,10 +14,32 @@ export function SiteAttendanceForm({ action, attendance, projects = [], employee
   const [projectId, setProjectId] = useState(initialProjectId);
   const [dateLimit] = useState(() => (typeof window === "undefined" ? currentDate : getBrowserDateInputValue()));
   const [attendanceDate, setAttendanceDate] = useState(() => attendance?.attendance_date || (typeof window === "undefined" ? currentDate : getBrowserDateInputValue()));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const selectedProject = useMemo(() => projects.find((project) => project.id === projectId), [projectId, projects]);
 
+  function handleSubmit(event) {
+    if (isSubmitting || hasSubmitted) {
+      event.preventDefault();
+      return;
+    }
+
+    setIsSubmitting(true);
+    setShowSuccess(false);
+  }
+
   return (
-    <form action={action} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:space-y-6 sm:rounded-2xl sm:p-6">
+    <form action={action} onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:space-y-6 sm:rounded-2xl sm:p-6">
+      <AttendanceSubmissionFeedback
+        error={error}
+        isSubmitting={isSubmitting}
+        setHasSubmitted={setHasSubmitted}
+        setIsSubmitting={setIsSubmitting}
+        setShowSuccess={setShowSuccess}
+        showSuccess={showSuccess}
+      />
+
       {error ? (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
           {error}
@@ -148,14 +171,68 @@ export function SiteAttendanceForm({ action, attendance, projects = [], employee
         >
           Cancel
         </Link>
-        <button
-          type="submit"
-          className="min-h-11 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600"
-        >
-          Save Attendance
-        </button>
+        <SubmitButton isSubmitting={isSubmitting} hasSubmitted={hasSubmitted} />
       </div>
     </form>
+  );
+}
+
+function AttendanceSubmissionFeedback({ error, isSubmitting, setHasSubmitted, setIsSubmitting, setShowSuccess, showSuccess }) {
+  const { pending } = useFormStatus();
+  const sawPending = useRef(false);
+
+  useEffect(() => {
+    if (pending) {
+      sawPending.current = true;
+      return;
+    }
+
+    if (!isSubmitting || !sawPending.current) {
+      return;
+    }
+
+    sawPending.current = false;
+    setIsSubmitting(false);
+
+    if (!error) {
+      setHasSubmitted(true);
+      setShowSuccess(true);
+    }
+  }, [error, isSubmitting, pending, setHasSubmitted, setIsSubmitting, setShowSuccess]);
+
+  return (
+    <>
+      {pending || isSubmitting ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm" role="status" aria-live="polite">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-5 text-center shadow-[0_24px_70px_rgba(15,23,42,0.24)]">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-brand-500" aria-hidden="true" />
+            <h2 className="mt-4 text-lg font-semibold text-slate-950">Submitting</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Please wait while the attendance form is submitted.</p>
+          </div>
+        </div>
+      ) : null}
+
+      {showSuccess ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700" role="status" aria-live="polite">
+          Attendance submitted successfully.
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function SubmitButton({ isSubmitting, hasSubmitted }) {
+  const { pending } = useFormStatus();
+  const disabled = pending || isSubmitting || hasSubmitted;
+
+  return (
+    <button
+      type="submit"
+      disabled={disabled}
+      className="min-h-11 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+    >
+      {pending || isSubmitting ? "Submitting..." : hasSubmitted ? "Submitted" : "Save Attendance"}
+    </button>
   );
 }
 
