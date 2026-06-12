@@ -3,9 +3,10 @@ create sequence if not exists public.employee_advance_reference_seq;
 create table if not exists public.employee_advances (
   id uuid primary key default gen_random_uuid(),
   reference_no text not null unique,
+  advance_type text not null default 'Job' check (advance_type in ('Job', 'General')),
   employee_id uuid not null references public.employees(id) on delete cascade,
   project_id uuid references public.site_projects(id) on delete set null,
-  project_name text not null,
+  project_name text,
   order_no text,
   amount numeric(12, 2) not null check (amount > 0),
   advance_date date not null default current_date,
@@ -25,6 +26,53 @@ create table if not exists public.employee_advances (
 
 alter table public.employee_advances
 alter column reference_no drop default;
+
+alter table public.employee_advances
+add column if not exists advance_type text not null default 'Job';
+
+alter table public.employee_advances
+alter column project_name drop not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'employee_advances_advance_type_check'
+      and conrelid = 'public.employee_advances'::regclass
+  ) then
+    alter table public.employee_advances
+    add constraint employee_advances_advance_type_check
+    check (advance_type in ('Job', 'General'));
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'employee_advances_type_details_check'
+      and conrelid = 'public.employee_advances'::regclass
+  ) then
+    alter table public.employee_advances
+    add constraint employee_advances_type_details_check
+    check (
+      (
+        advance_type = 'Job'
+        and project_name is not null
+      )
+      or (
+        advance_type = 'General'
+        and project_id is null
+        and project_name is null
+        and order_no is null
+        and reason is not null
+        and btrim(reason) <> ''
+      )
+    );
+  end if;
+end $$;
 
 create or replace function public.set_employee_advance_reference()
 returns trigger

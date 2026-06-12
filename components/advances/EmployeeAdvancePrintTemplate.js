@@ -4,6 +4,9 @@ import { PrintButton } from "@/components/site-allowance/PrintButton";
 import { formatCurrency, formatDate, formatPaymentMethod } from "@/lib/employee-advances";
 
 export function EmployeeAdvancePrintTemplate({ advance }) {
+  const isGeneralAdvance = advance.advance_type === "General";
+  const advanceContext = isGeneralAdvance ? advance.reason || "General purpose" : advance.project_name || "Not set";
+
   return (
     <main className="min-h-screen bg-white text-slate-950 print:min-h-screen print:font-sans">
       <div className="mx-auto max-w-5xl space-y-4 bg-white print:w-full print:max-w-none print:space-y-0">
@@ -36,8 +39,15 @@ export function EmployeeAdvancePrintTemplate({ advance }) {
 
             <div className="mt-4 grid gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 sm:grid-cols-4 print:mt-2 print:grid-cols-4 print:border-slate-900 print:bg-slate-900">
               <Info label="Employee" value={advance.employees?.name || "Not linked"} />
-              <Info label="Project" value={advance.project_name} />
-              <Info label="Order No." value={advance.order_no || "Not set"} />
+              <Info label="Advance Type" value={advance.advance_type || "Job"} />
+              {isGeneralAdvance ? (
+                <Info label="Purpose" value={advanceContext} />
+              ) : (
+                <>
+                  <Info label="Project" value={advanceContext} />
+                  <Info label="Order No." value={advance.order_no || "Not set"} />
+                </>
+              )}
               <Info label="Status" value={advance.display_status} />
               <Info label="Advance Date" value={formatDate(advance.advance_date)} />
               <Info label="Payment Method" value={formatPaymentMethod(advance.payment_method)} />

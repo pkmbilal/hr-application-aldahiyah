@@ -6,13 +6,17 @@ import { getBrowserDateInputValue } from "@/lib/dates";
 
 const ADVANCE_PAYMENT_METHODS = ["cash", "bank transfer", "payroll adjustment", "other"];
 const ADVANCE_STATUSES = ["Pending", "Approved", "Rejected", "Paid", "Cancelled"];
+const ADVANCE_TYPES = ["Job", "General"];
 
 export function EmployeeAdvanceForm({ action, advance, employees = [], projects = [], linkedEmployee, isAdmin, error, currentDate = "" }) {
-  const initialProjectId = advance?.project_id || projects[0]?.id || "";
+  const initialAdvanceType = advance?.advance_type || "Job";
+  const initialProjectId = initialAdvanceType === "Job" ? advance?.project_id || projects[0]?.id || "" : "";
+  const [advanceType, setAdvanceType] = useState(initialAdvanceType);
   const [projectId, setProjectId] = useState(initialProjectId);
   const [dateLimit] = useState(() => (typeof window === "undefined" ? currentDate : getBrowserDateInputValue()));
   const [advanceDate, setAdvanceDate] = useState(() => advance?.advance_date || (typeof window === "undefined" ? currentDate : getBrowserDateInputValue()));
   const selectedProject = useMemo(() => projects.find((project) => project.id === projectId), [projectId, projects]);
+  const isJobAdvance = advanceType === "Job";
 
   return (
     <form action={action} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-theme-sm sm:space-y-6 sm:rounded-2xl sm:p-6">
@@ -50,27 +54,52 @@ export function EmployeeAdvanceForm({ action, advance, employees = [], projects 
         )}
 
         <div>
-          <label htmlFor="project_id" className="text-sm font-medium text-slate-700">
-            Project
+          <label htmlFor="advance_type" className="text-sm font-medium text-slate-700">
+            Advance Type
           </label>
           <select
-            id="project_id"
-            name="project_id"
-            value={projectId}
-            onChange={(event) => setProjectId(event.target.value)}
+            id="advance_type"
+            name="advance_type"
+            value={advanceType}
+            onChange={(event) => setAdvanceType(event.target.value)}
             required
             className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
           >
-            <option value="">Select project</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
+            {ADVANCE_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
               </option>
             ))}
           </select>
         </div>
 
-        <ReadOnlyValue label="Order Number" value={selectedProject?.order_no || advance?.order_no || "Select project"} />
+        {isJobAdvance ? (
+          <>
+            <div>
+              <label htmlFor="project_id" className="text-sm font-medium text-slate-700">
+                Project
+              </label>
+              <select
+                id="project_id"
+                name="project_id"
+                value={projectId}
+                onChange={(event) => setProjectId(event.target.value)}
+                required
+                className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+              >
+                <option value="">Select project</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <ReadOnlyValue label="Order Number" value={selectedProject?.order_no || advance?.order_no || "Select project"} />
+          </>
+        ) : null}
+
         <Field label="Advance Date" name="advance_date" type="date" value={advanceDate} onChange={(event) => setAdvanceDate(event.target.value)} max={dateLimit} required />
         <MoneyField label="Advance Amount" name="amount" defaultValue={advance?.amount || ""} />
 
@@ -122,6 +151,7 @@ export function EmployeeAdvanceForm({ action, advance, employees = [], projects 
             name="reason"
             defaultValue={advance?.reason || ""}
             rows={4}
+            required={!isJobAdvance}
             className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
           />
         </div>

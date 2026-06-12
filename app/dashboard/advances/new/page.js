@@ -26,7 +26,7 @@ export default async function NewAdvancePage({ searchParams }) {
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Employee Advance</p>
         <h1 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Add Advance</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          Create or request an advance and link it to the project it belongs to.
+          Create or request a job advance linked to a project, or a general advance with a stated purpose.
         </p>
       </section>
 

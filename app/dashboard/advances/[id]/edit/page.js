@@ -50,7 +50,7 @@ export default async function EditAdvancePage({ params, searchParams }) {
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Employee Advance</p>
         <h1 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Edit {advance.reference_no}</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          Update advance request details, project assignment, amount, and admin status.
+          Update advance request details, type, amount, and admin status.
         </p>
       </section>
 
